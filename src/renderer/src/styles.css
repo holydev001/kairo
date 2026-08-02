@@ -12,6 +12,14 @@ body {
   min-width: 320px;
   min-height: 100vh;
 }
+button,
+input,
+textarea {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
 .shell {
   display: grid;
   grid-template-columns: 250px 1fr;
@@ -29,37 +37,90 @@ body {
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin: 0 10px 60px;
-  letter-spacing: 0.18em;
-  font-size: 13px;
+  gap: 14px;
+  margin: 0 8px 58px;
 }
-.brand span {
+.brand-mark {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid #ad8e50;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  color: #d8b568;
+}
+.brand-frame {
+  position: absolute;
+  inset: 2px;
+  border: 1px solid #6f5b32;
+  clip-path: polygon(
+    0 0,
+    72% 0,
+    72% 1px,
+    1px 1px,
+    1px 72%,
+    0 72%,
+    0 0,
+    100% 0,
+    100% 100%,
+    28% 100%,
+    28% calc(100% - 1px),
+    calc(100% - 1px) calc(100% - 1px),
+    calc(100% - 1px) 28%,
+    100% 28%
+  );
+}
+.brand-glyph {
+  position: relative;
+  font-family: 'Yu Mincho', 'Hiragino Mincho ProN', 'MS Mincho', serif;
+  font-size: 23px;
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 0 18px rgba(205, 166, 89, 0.18);
+}
+.brand-mark i {
+  position: absolute;
+  right: -1px;
+  bottom: 3px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
-  font-family: 'Instrument Serif';
-  font-size: 18px;
-  color: #d1af67;
+  background: #d9b86c;
+  box-shadow: 0 0 10px rgba(217, 184, 108, 0.7);
+}
+.brand-name {
+  display: grid;
+  gap: 4px;
+}
+.brand-name strong {
+  color: #eee9df;
+  font-size: 13px;
+  letter-spacing: 0.22em;
+}
+.brand-name small {
+  color: #5d5a53;
+  font-size: 7px;
+  letter-spacing: 0.17em;
+  white-space: nowrap;
 }
 .sidebar nav {
   display: grid;
   gap: 6px;
 }
-.sidebar a {
+.sidebar button {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
   padding: 11px 12px;
+  background: transparent;
   color: #77756f;
-  text-decoration: none;
   font-size: 13px;
-  cursor: pointer;
+  text-align: left;
 }
-.sidebar a.active {
+.sidebar button.active {
   color: #f1ede4;
   background: #191814;
   border-left: 2px solid #c7a45d;
@@ -68,9 +129,32 @@ body {
   margin-top: auto;
 }
 .content {
-  width: min(1040px, calc(100vw - 320px));
+  width: min(1040px, calc(100vw - 300px));
   margin: 0 auto;
   padding: 96px 54px 64px;
+}
+.header-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.save-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #67645e;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.save-state.saved {
+  color: #7f8f72;
+}
+.save-state.error {
+  color: #c06e61;
+}
+.save-state svg {
+  animation: spin 0.9s linear infinite;
 }
 header h1 {
   margin: 8px 0 10px;
@@ -91,7 +175,9 @@ p {
 }
 .lede {
   margin: 0;
+  max-width: 680px;
   font-size: 15px;
+  line-height: 1.55;
 }
 .rule {
   height: 1px;
@@ -101,14 +187,25 @@ p {
 .mission {
   padding: 6px 0 42px;
 }
-.mission h2 {
-  margin: 15px 0 8px;
+.mission input {
+  display: block;
+  width: 100%;
+  margin: 15px 0 0;
+  border: 0;
+  border-bottom: 1px solid #292823;
+  border-radius: 0;
+  padding: 4px 0 14px;
+  outline: none;
+  background: transparent;
+  color: #eeeae0;
   font-family: 'Instrument Serif';
   font-weight: 400;
   font-size: 34px;
 }
-.mission p:last-child {
-  margin: 0;
+.mission input::placeholder,
+.check input::placeholder,
+.reflection textarea::placeholder {
+  color: #55534e;
 }
 .grid {
   display: grid;
@@ -142,6 +239,20 @@ p {
   border-top: 1px solid #211f1b;
   font-size: 14px;
 }
+.check > button {
+  flex: 0 0 auto;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: #625f58;
+}
+.check input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #ded9cf;
+}
 .done {
   display: grid;
   place-items: center;
@@ -150,6 +261,12 @@ p {
   border-radius: 50%;
   background: #b28d48;
   color: #0b0b0a;
+}
+.circle-button {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
 }
 .pulse .score {
   margin: 22px 0 14px;
@@ -176,52 +293,188 @@ p {
   font-size: 12px;
   line-height: 1.5;
 }
-.reflection {
-  display: flex;
+.meters {
+  display: grid;
+  gap: 13px;
+  margin-top: 28px;
+}
+.meters label {
+  display: grid;
+  grid-template-columns: 48px 1fr 18px;
   align-items: center;
-  justify-content: space-between;
+  gap: 9px;
+  color: #77746c;
+  font-size: 11px;
+}
+.meters input {
+  width: 100%;
+  accent-color: #b89550;
+}
+.meters span {
+  color: #d3b36e;
+  text-align: right;
+}
+.reflection {
+  display: grid;
+  grid-template-columns: 0.65fr 1.35fr;
+  gap: 36px;
   padding: 38px 0;
 }
 .reflection h3 {
-  margin: 0 0 0 30px;
-  flex: 1;
+  margin: 12px 0 0;
   font-family: 'Instrument Serif';
   font-size: 23px;
   font-weight: 400;
 }
-.reflection button {
-  border: 0;
-  border-bottom: 1px solid #a88749;
+.reflection textarea {
+  min-height: 112px;
+  resize: vertical;
+  border: 1px solid #292823;
   border-radius: 0;
-  padding: 9px 0;
-  background: none;
-  color: #d5b36c;
-  font: inherit;
-  cursor: pointer;
+  padding: 15px;
+  outline: none;
+  background: #10100f;
+  color: #d8d4cb;
+  line-height: 1.6;
 }
-.reflection button span {
-  margin-left: 18px;
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
-@media (max-width: 900px) {
+@media (max-width: 1120px) {
   .shell {
-    grid-template-columns: 76px 1fr;
+    grid-template-columns: 82px minmax(0, 1fr);
   }
   .sidebar {
-    padding-inline: 14px;
-  }
-  .brand strong,
-  .sidebar a:not(.active)::after,
-  .sidebar a {
-    font-size: 0;
+    padding: 66px 12px 24px;
   }
   .brand {
-    margin-inline: 8px;
-  }
-  .sidebar a {
     justify-content: center;
+    margin: 0 0 52px;
+  }
+  .brand-name,
+  .nav-label {
+    display: none;
+  }
+  .sidebar button {
+    justify-content: center;
+    min-height: 42px;
+    padding-inline: 0;
   }
   .content {
-    width: auto;
-    padding-inline: 38px;
+    width: min(100%, 880px);
+    padding-inline: clamp(32px, 5vw, 54px);
+  }
+}
+@media (max-width: 880px) {
+  .content {
+    padding-top: 82px;
+  }
+  header h1 {
+    font-size: clamp(40px, 7vw, 50px);
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .grid > section {
+    padding-right: 0;
+  }
+  .grid > section + section {
+    border-top: 1px solid #292823;
+    border-left: 0;
+    padding-left: 0;
+  }
+  .pulse {
+    display: grid;
+    grid-template-columns: 0.7fr 1.3fr;
+    column-gap: 32px;
+  }
+  .pulse > .eyebrow {
+    grid-column: 1 / -1;
+  }
+  .pulse .meters {
+    align-self: center;
+    margin-top: 18px;
+  }
+  .reflection {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+}
+@media (max-width: 720px) {
+  .shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: 62px minmax(0, 1fr);
+  }
+  .sidebar {
+    z-index: 3;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-right: 0;
+    border-bottom: 1px solid #24231f;
+  }
+  .brand {
+    justify-content: flex-start;
+    margin: 0 auto 0 0;
+  }
+  .brand-mark {
+    width: 36px;
+    height: 36px;
+  }
+  .sidebar nav {
+    display: flex;
+    gap: 2px;
+  }
+  .sidebar button {
+    width: 38px;
+    min-height: 38px;
+  }
+  .sidebar button.active {
+    border-bottom: 2px solid #c7a45d;
+    border-left: 0;
+  }
+  .settings {
+    margin-top: 0;
+  }
+  .content {
+    width: 100%;
+    padding: 46px 24px 50px;
+  }
+  .header-line {
+    align-items: flex-start;
+    gap: 18px;
+  }
+  .rule {
+    margin-block: 34px;
+  }
+  .mission input {
+    font-size: clamp(27px, 6vw, 34px);
+  }
+  .pulse {
+    display: block;
+  }
+  .reflection textarea {
+    min-height: 132px;
+  }
+}
+@media (max-width: 560px) {
+  .sidebar nav button:nth-child(n + 4) {
+    display: none;
+  }
+  .content {
+    padding-inline: 19px;
+  }
+  .header-line {
+    display: grid;
+  }
+  header h1 {
+    margin-top: 14px;
+  }
+  .save-state {
+    grid-row: 1;
+    justify-self: end;
   }
 }
