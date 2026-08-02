@@ -11,6 +11,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow: hidden;
 }
 button,
 input,
@@ -23,7 +24,8 @@ button {
 .shell {
   display: grid;
   grid-template-columns: 250px 1fr;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: radial-gradient(circle at 75% 0%, #17150f 0, transparent 33%), #0b0b0a;
 }
 .sidebar {
@@ -33,6 +35,7 @@ button {
   padding: 70px 22px 28px;
   border-right: 1px solid #24231f;
   background: #0e0e0d;
+  height: 100vh;
 }
 .brand {
   display: flex;
@@ -130,8 +133,14 @@ button {
 }
 .content {
   width: min(1040px, calc(100vw - 300px));
+  height: 100vh;
   margin: 0 auto;
   padding: 96px 54px 64px;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.content::-webkit-scrollbar {
+  display: none;
 }
 .header-line {
   display: flex;
@@ -333,9 +342,71 @@ p {
   font-size: 9px;
   letter-spacing: 0.16em;
 }
+.commitment-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.commitment-actions > span {
+  margin-right: 8px;
+}
+.commitment-actions button,
+.form-confirm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid #35332d;
+  border-radius: 0;
+  padding: 9px 11px;
+  background: transparent;
+  color: #99958b;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+.commitment-actions .primary-action,
+.form-confirm {
+  border-color: #8f743f;
+  background: #b89550;
+  color: #0b0b0a;
+}
+.commitment-categories {
+  display: grid;
+}
+.commitment-category {
+  padding: 27px 0 0;
+  border-top: 1px solid #292823;
+}
+.category-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.category-heading h3 {
+  margin: 7px 0 0;
+  font-family: 'Instrument Serif';
+  font-size: 23px;
+  font-weight: 400;
+}
+.category-heading > button,
+.icon-action {
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 0;
+  padding: 7px;
+  background: transparent;
+  color: #5f5c55;
+}
+.category-heading > button:hover,
+.icon-action:hover,
+.commitment-controls button:first-child:hover {
+  color: #b66f62;
+}
 .commitment-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 .commitment {
   position: relative;
@@ -379,6 +450,14 @@ p {
   background: transparent;
   color: #65625b;
 }
+.commitment-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.commitment-controls button:first-child {
+  color: #55524c;
+}
 .commitment.complete .commitment-topline button {
   background: #b89550;
   color: #0b0b0a;
@@ -409,6 +488,103 @@ p {
   grid-template-columns: minmax(0, 1.4fr) minmax(70px, 0.6fr);
   gap: 12px;
   align-self: end;
+}
+.empty-category {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 26px;
+  border: 0;
+  border-radius: 0;
+  padding: 10px 0;
+  background: transparent;
+  color: #8c7952;
+  font-size: 11px;
+}
+.inline-form,
+.commitment-form {
+  margin-bottom: 26px;
+  border: 1px solid #302e28;
+  border-radius: 0;
+  padding: 22px;
+  background: #10100f;
+}
+.inline-form {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+}
+.inline-form label {
+  flex: 1;
+}
+.inline-form label span,
+.form-fields label span,
+.icon-picker > p {
+  display: block;
+  margin: 0 0 9px;
+  color: #77736a;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.16em;
+}
+.inline-form input,
+.form-fields input,
+.form-fields select {
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #35332d;
+  border-radius: 0;
+  padding: 8px 0 10px;
+  outline: none;
+  background: transparent;
+  color: #ddd8ce;
+}
+.form-fields select {
+  color-scheme: dark;
+}
+.form-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.form-heading h3 {
+  margin: 8px 0 0;
+  font-family: 'Instrument Serif';
+  font-size: 24px;
+  font-weight: 400;
+}
+.form-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 28px;
+}
+.icon-picker {
+  margin: 26px 0 22px;
+}
+.icon-picker > div {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+  gap: 5px;
+}
+.icon-picker button {
+  display: grid;
+  place-items: center;
+  min-height: 38px;
+  border: 1px solid #292823;
+  border-radius: 0;
+  background: #0d0d0c;
+  color: #6f6b63;
+}
+.icon-picker button:hover,
+.icon-picker button.selected {
+  border-color: #9e8048;
+  color: #d0aa60;
+  background: #191711;
+}
+.form-confirm:disabled {
+  cursor: not-allowed;
+  opacity: 0.35;
 }
 .reflection {
   display: grid;
@@ -498,7 +674,7 @@ p {
     gap: 22px;
   }
   .commitment-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   }
   .commitment {
     min-height: 178px;
@@ -520,6 +696,7 @@ p {
     padding: 10px 14px;
     border-right: 0;
     border-bottom: 1px solid #24231f;
+    height: 62px;
   }
   .brand {
     justify-content: flex-start;
@@ -546,6 +723,7 @@ p {
   }
   .content {
     width: 100%;
+    height: calc(100vh - 62px);
     padding: 46px 24px 50px;
   }
   .header-line {
@@ -566,7 +744,22 @@ p {
   }
   .commitments-heading {
     align-items: flex-start;
+    flex-direction: column;
     gap: 24px;
+  }
+  .commitment-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .commitment-actions > span {
+    width: 100%;
+  }
+  .form-fields {
+    grid-template-columns: 1fr;
+  }
+  .inline-form {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 @media (max-width: 560px) {

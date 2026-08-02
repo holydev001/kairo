@@ -3,20 +3,21 @@ import {
   BookOpen,
   Check,
   Circle,
-  Cross,
-  Dumbbell,
   Feather,
   Home,
   LoaderCircle,
-  Library,
+  Plus,
   Settings,
   Sparkles,
-  Target
+  Target,
+  Trash2,
+  X
 } from 'lucide-react'
 import { createEmptyEntry, type DailyEntry } from '../../shared/journal'
+import { commitmentIconNames } from './commitment-icon-library'
+import { CommitmentIcon } from './commitment-icons'
 
 const today = new Date().toISOString().slice(0, 10)
-
 const kaizenThoughts = [
   'Small steps, repeated with intention, become transformation.',
   'Improve the system, and the result will follow.',
@@ -51,17 +52,29 @@ export function App(): React.JSX.Element {
   const [entry, setEntry] = useState<DailyEntry>(() => createEmptyEntry(today))
   const [status, setStatus] = useState<'loading' | 'saved' | 'saving' | 'error'>('loading')
   const [hydrated, setHydrated] = useState(false)
+  const [showCommitmentForm, setShowCommitmentForm] = useState(false)
+  const [showCategoryForm, setShowCategoryForm] = useState(false)
+  const [categoryName, setCategoryName] = useState('')
+  const [draft, setDraft] = useState({
+    title: '',
+    detail: '',
+    target: '',
+    icon: 'lightning',
+    categoryId: 'health'
+  })
+
   const completed = entry.priorities.filter((priority) => priority.completed).length
-  const commitmentsCompleted = Object.values(entry.commitments).filter(
-    (commitment) => commitment.completed
-  ).length
+  const commitments = entry.commitmentCategories.flatMap((category) => category.commitments)
+  const commitmentsCompleted = commitments.filter((commitment) => commitment.completed).length
   const progress = useMemo(() => {
     const intention = entry.intention.trim() ? 15 : 0
     const priorities = Math.round((completed / 3) * 40)
-    const commitments = Math.round((commitmentsCompleted / 3) * 30)
+    const commitmentProgress = commitments.length
+      ? Math.round((commitmentsCompleted / commitments.length) * 30)
+      : 0
     const reflection = entry.reflection.trim() ? 15 : 0
-    return intention + priorities + commitments + reflection
-  }, [commitmentsCompleted, completed, entry.intention, entry.reflection])
+    return intention + priorities + commitmentProgress + reflection
+  }, [commitments.length, commitmentsCompleted, completed, entry.intention, entry.reflection])
 
   useEffect(() => {
     void window.kairo.journal
@@ -98,17 +111,97 @@ export function App(): React.JSX.Element {
     }))
   }
 
-  const updateCommitment = <K extends keyof DailyEntry['commitments']>(
-    key: K,
-    patch: Partial<DailyEntry['commitments'][K]>
+  const updateCommitment = (
+    categoryId: string,
+    commitmentId: string,
+    patch: Partial<DailyEntry['commitmentCategories'][number]['commitments'][number]>
   ): void => {
     setEntry((current) => ({
       ...current,
-      commitments: {
-        ...current.commitments,
-        [key]: { ...current.commitments[key], ...patch }
-      }
+      commitmentCategories: current.commitmentCategories.map((category) =>
+        category.id === categoryId
+          ? {
+              ...category,
+              commitments: category.commitments.map((commitment) =>
+                commitment.id === commitmentId ? { ...commitment, ...patch } : commitment
+              )
+            }
+          : category
+      )
     }))
+  }
+
+  const deleteCommitment = (categoryId: string, commitmentId: string): void => {
+    setEntry((current) => ({
+      ...current,
+      commitmentCategories: current.commitmentCategories.map((category) =>
+        category.id === categoryId
+          ? {
+              ...category,
+              commitments: category.commitments.filter((item) => item.id !== commitmentId)
+            }
+          : category
+      )
+    }))
+  }
+
+  const addCategory = (): void => {
+    const name = categoryName.trim()
+    if (!name) return
+    const id = crypto.randomUUID()
+    setEntry((current) => ({
+      ...current,
+      commitmentCategories: [...current.commitmentCategories, { id, name, commitments: [] }]
+    }))
+    setDraft((current) => ({ ...current, categoryId: id }))
+    setCategoryName('')
+    setShowCategoryForm(false)
+  }
+
+  const deleteCategory = (categoryId: string): void => {
+    setEntry((current) => ({
+      ...current,
+      commitmentCategories: current.commitmentCategories.filter(
+        (category) => category.id !== categoryId
+      )
+    }))
+  }
+
+  const addCommitment = (): void => {
+    const title = draft.title.trim()
+    if (!title || !draft.categoryId) return
+    setEntry((current) => ({
+      ...current,
+      commitmentCategories: current.commitmentCategories.map((category) =>
+        category.id === draft.categoryId
+          ? {
+              ...category,
+              commitments: [
+                ...category.commitments,
+                {
+                  id: crypto.randomUUID(),
+                  title,
+                  detail: draft.detail.trim(),
+                  target: draft.target.trim(),
+                  icon: draft.icon,
+                  completed: false
+                }
+              ]
+            }
+          : category
+      )
+    }))
+    setDraft((current) => ({ ...current, title: '', detail: '', target: '', icon: 'lightning' }))
+    setShowCommitmentForm(false)
+  }
+
+  const openCommitmentForm = (categoryId?: string): void => {
+    const fallback = entry.commitmentCategories[0]?.id ?? ''
+    setDraft((current) => ({
+      ...current,
+      categoryId: categoryId ?? current.categoryId ?? fallback
+    }))
+    setShowCommitmentForm(true)
   }
 
   return (
@@ -197,7 +290,7 @@ export function App(): React.JSX.Element {
                 <div className="check" key={priority.id}>
                   <button
                     className={priority.completed ? 'done' : 'circle-button'}
-                    aria-label={`Mark priority ${index + 1} ${priority.completed ? 'incomplete' : 'complete'}`}
+                    aria-label={`Toggle priority ${index + 1}`}
                     onClick={() => updatePriority(index, { completed: !priority.completed })}
                   >
                     {priority.completed ? <Check size={13} /> : <Circle size={17} />}
@@ -229,7 +322,7 @@ export function App(): React.JSX.Element {
                   min="1"
                   max="10"
                   value={entry.mood}
-                  onChange={(e) => setEntry({ ...entry, mood: Number(e.target.value) })}
+                  onChange={(event) => setEntry({ ...entry, mood: Number(event.target.value) })}
                 />
                 <span>{entry.mood}</span>
               </label>
@@ -240,7 +333,7 @@ export function App(): React.JSX.Element {
                   min="1"
                   max="10"
                   value={entry.energy}
-                  onChange={(e) => setEntry({ ...entry, energy: Number(e.target.value) })}
+                  onChange={(event) => setEntry({ ...entry, energy: Number(event.target.value) })}
                 />
                 <span>{entry.energy}</span>
               </label>
@@ -254,99 +347,212 @@ export function App(): React.JSX.Element {
               <p className="eyebrow">DAILY COMMITMENTS</p>
               <h2>Keep faith with yourself.</h2>
             </div>
-            <span>{commitmentsCompleted} / 3 KEPT</span>
+            <div className="commitment-actions">
+              <span>
+                {commitmentsCompleted} / {commitments.length} KEPT
+              </span>
+              <button onClick={() => setShowCategoryForm(true)}>
+                <Plus size={13} /> Category
+              </button>
+              <button className="primary-action" onClick={() => openCommitmentForm()}>
+                <Plus size={13} /> Commitment
+              </button>
+            </div>
           </div>
-          <div className="commitment-grid">
-            <article
-              className={entry.commitments.workout.completed ? 'commitment complete' : 'commitment'}
-            >
-              <div className="commitment-topline">
-                <Dumbbell size={18} />
-                <button
-                  aria-label="Toggle workout completion"
-                  onClick={() =>
-                    updateCommitment('workout', {
-                      completed: !entry.commitments.workout.completed,
-                      scheduled: true
-                    })
-                  }
-                >
-                  {entry.commitments.workout.completed ? <Check size={13} /> : <Circle size={17} />}
-                </button>
-              </div>
-              <div>
-                <p className="eyebrow">HEALTH</p>
-                <h3>Workout</h3>
-              </div>
-              <input
-                value={entry.commitments.workout.plan}
-                onChange={(event) =>
-                  updateCommitment('workout', { plan: event.target.value, scheduled: true })
-                }
-                placeholder="What is the plan?"
-                maxLength={160}
-              />
-            </article>
 
-            <article
-              className={entry.commitments.reading.completed ? 'commitment complete' : 'commitment'}
-            >
-              <div className="commitment-topline">
-                <Library size={18} />
-                <button
-                  aria-label="Toggle reading completion"
-                  onClick={() =>
-                    updateCommitment('reading', { completed: !entry.commitments.reading.completed })
-                  }
-                >
-                  {entry.commitments.reading.completed ? <Check size={13} /> : <Circle size={17} />}
-                </button>
-              </div>
-              <div>
-                <p className="eyebrow">LEARNING</p>
-                <h3>Reading</h3>
-              </div>
-              <div className="commitment-fields">
+          {showCategoryForm && (
+            <div className="inline-form category-form">
+              <label>
+                <span>NEW CATEGORY</span>
                 <input
-                  value={entry.commitments.reading.book}
-                  onChange={(event) => updateCommitment('reading', { book: event.target.value })}
-                  placeholder="Current book"
-                  maxLength={160}
+                  autoFocus
+                  value={categoryName}
+                  onChange={(event) => setCategoryName(event.target.value)}
+                  onKeyDown={(event) => event.key === 'Enter' && addCategory()}
+                  placeholder="e.g. Creative"
+                  maxLength={50}
                 />
-                <input
-                  value={entry.commitments.reading.target}
-                  onChange={(event) => updateCommitment('reading', { target: event.target.value })}
-                  placeholder="Pages or time"
-                  maxLength={80}
-                />
-              </div>
-            </article>
+              </label>
+              <button className="form-confirm" onClick={addCategory}>
+                Add category
+              </button>
+              <button
+                className="icon-action"
+                onClick={() => setShowCategoryForm(false)}
+                aria-label="Cancel"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
 
-            <article
-              className={entry.commitments.faith.completed ? 'commitment complete' : 'commitment'}
-            >
-              <div className="commitment-topline">
-                <Cross size={18} />
+          {showCommitmentForm && (
+            <div className="commitment-form">
+              <div className="form-heading">
+                <div>
+                  <p className="eyebrow">NEW COMMITMENT</p>
+                  <h3>Define the action.</h3>
+                </div>
                 <button
-                  aria-label="Toggle faith reading completion"
-                  onClick={() =>
-                    updateCommitment('faith', { completed: !entry.commitments.faith.completed })
-                  }
+                  className="icon-action"
+                  onClick={() => setShowCommitmentForm(false)}
+                  aria-label="Close"
                 >
-                  {entry.commitments.faith.completed ? <Check size={13} /> : <Circle size={17} />}
+                  <X size={17} />
                 </button>
               </div>
-              <div>
-                <p className="eyebrow">FAITH</p>
-                <h3>Scripture</h3>
+              <div className="form-fields">
+                <label>
+                  <span>NAME</span>
+                  <input
+                    autoFocus
+                    value={draft.title}
+                    onChange={(event) => setDraft({ ...draft, title: event.target.value })}
+                    placeholder="Morning walk"
+                    maxLength={80}
+                  />
+                </label>
+                <label>
+                  <span>CATEGORY</span>
+                  <select
+                    value={draft.categoryId}
+                    onChange={(event) => setDraft({ ...draft, categoryId: event.target.value })}
+                  >
+                    {entry.commitmentCategories.map((category) => (
+                      <option value={category.id} key={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>DETAIL</span>
+                  <input
+                    value={draft.detail}
+                    onChange={(event) => setDraft({ ...draft, detail: event.target.value })}
+                    placeholder="What does keeping it mean?"
+                    maxLength={160}
+                  />
+                </label>
+                <label>
+                  <span>TARGET</span>
+                  <input
+                    value={draft.target}
+                    onChange={(event) => setDraft({ ...draft, target: event.target.value })}
+                    placeholder="30 min"
+                    maxLength={80}
+                  />
+                </label>
               </div>
-              <input
-                value={entry.commitments.faith.reference}
-                onChange={(event) => updateCommitment('faith', { reference: event.target.value })}
-                placeholder="Today’s reference"
-                maxLength={120}
-              />
-            </article>
+              <div className="icon-picker">
+                <p>CHOOSE AN ICON</p>
+                <div>
+                  {commitmentIconNames.map((name) => (
+                    <button
+                      className={draft.icon === name ? 'selected' : ''}
+                      key={name}
+                      onClick={() => setDraft({ ...draft, icon: name })}
+                      aria-label={`Use ${name} icon`}
+                      title={name}
+                    >
+                      <CommitmentIcon name={name} size={17} />
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button
+                className="form-confirm"
+                disabled={!draft.title.trim() || !draft.categoryId}
+                onClick={addCommitment}
+              >
+                Add commitment
+              </button>
+            </div>
+          )}
+
+          <div className="commitment-categories">
+            {entry.commitmentCategories.map((category) => (
+              <section className="commitment-category" key={category.id}>
+                <div className="category-heading">
+                  <div>
+                    <p className="eyebrow">CATEGORY</p>
+                    <h3>{category.name}</h3>
+                  </div>
+                  <button
+                    onClick={() => deleteCategory(category.id)}
+                    aria-label={`Delete ${category.name} category`}
+                    title="Delete category"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+                {category.commitments.length ? (
+                  <div className="commitment-grid">
+                    {category.commitments.map((commitment) => (
+                      <article
+                        className={commitment.completed ? 'commitment complete' : 'commitment'}
+                        key={commitment.id}
+                      >
+                        <div className="commitment-topline">
+                          <CommitmentIcon name={commitment.icon} />
+                          <div className="commitment-controls">
+                            <button
+                              onClick={() => deleteCommitment(category.id, commitment.id)}
+                              aria-label={`Delete ${commitment.title}`}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                            <button
+                              aria-label={`Toggle ${commitment.title}`}
+                              onClick={() =>
+                                updateCommitment(category.id, commitment.id, {
+                                  completed: !commitment.completed
+                                })
+                              }
+                            >
+                              {commitment.completed ? <Check size={13} /> : <Circle size={17} />}
+                            </button>
+                          </div>
+                        </div>
+                        <div>
+                          <p className="eyebrow">{category.name.toUpperCase()}</p>
+                          <h3>{commitment.title}</h3>
+                        </div>
+                        <div className="commitment-fields">
+                          <input
+                            value={commitment.detail}
+                            onChange={(event) =>
+                              updateCommitment(category.id, commitment.id, {
+                                detail: event.target.value
+                              })
+                            }
+                            placeholder="Add detail"
+                            maxLength={160}
+                          />
+                          <input
+                            value={commitment.target}
+                            onChange={(event) =>
+                              updateCommitment(category.id, commitment.id, {
+                                target: event.target.value
+                              })
+                            }
+                            placeholder="Target"
+                            maxLength={80}
+                          />
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <button
+                    className="empty-category"
+                    onClick={() => openCommitmentForm(category.id)}
+                  >
+                    <Plus size={14} /> Add the first commitment
+                  </button>
+                )}
+              </section>
+            ))}
           </div>
         </section>
 
@@ -357,7 +563,7 @@ export function App(): React.JSX.Element {
           </div>
           <textarea
             value={entry.reflection}
-            onChange={(e) => setEntry({ ...entry, reflection: e.target.value })}
+            onChange={(event) => setEntry({ ...entry, reflection: event.target.value })}
             placeholder="Write a few honest lines…"
             maxLength={2000}
           />

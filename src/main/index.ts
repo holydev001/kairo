@@ -1,10 +1,22 @@
 import { join } from 'node:path'
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { app, BrowserWindow, ipcMain, nativeImage, shell } from 'electron'
 import { JournalDatabase } from './database'
 
 let journal: JournalDatabase
 
 app.setName('Kairo')
+app.setAppUserModelId('dev.holydev.kairo')
+
+const kairoIcon = nativeImage.createFromDataURL(
+  `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+      <rect width="256" height="256" fill="#0b0b0a"/>
+      <path d="M44 94V44h64M148 44h64v50M212 162v50h-64M108 212H44v-50" fill="none" stroke="#8f743f" stroke-width="7"/>
+      <text x="128" y="161" fill="#d8b568" font-size="104" font-family="Yu Mincho, serif" font-weight="700" text-anchor="middle">改</text>
+      <circle cx="207" cy="205" r="8" fill="#d9b86c"/>
+    </svg>
+  `)}`
+)
 
 function createWindow(): void {
   const window = new BrowserWindow({
@@ -13,6 +25,7 @@ function createWindow(): void {
     minWidth: 680,
     minHeight: 620,
     backgroundColor: '#0b0b0a',
+    icon: kairoIcon,
     titleBarStyle: 'hidden',
     titleBarOverlay: { color: '#0b0b0a', symbolColor: '#8e8b82', height: 44 },
     webPreferences: {

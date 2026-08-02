@@ -6,35 +6,79 @@ export const prioritySchema = z.object({
   completed: z.boolean()
 })
 
-export const dailyCommitmentsSchema = z.object({
-  workout: z
-    .object({ scheduled: z.boolean(), completed: z.boolean(), plan: z.string().max(160) })
-    .default({ scheduled: false, completed: false, plan: '' }),
-  reading: z
-    .object({
-      completed: z.boolean(),
-      book: z.string().max(160),
-      target: z.string().max(80)
-    })
-    .default({ completed: false, book: '', target: '' }),
-  faith: z
-    .object({
-      completed: z.boolean(),
-      reference: z.string().max(120),
-      reflection: z.string().max(500)
-    })
-    .default({ completed: false, reference: '', reflection: '' })
+export const commitmentSchema = z.object({
+  id: z.string().min(1),
+  title: z.string().min(1).max(80),
+  detail: z.string().max(160),
+  target: z.string().max(80),
+  icon: z.string().min(1).max(40),
+  completed: z.boolean()
 })
 
-export const dailyEntrySchema = z.object({
+export const commitmentCategorySchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).max(50),
+  commitments: z.array(commitmentSchema).max(24)
+})
+
+export type CommitmentCategory = z.infer<typeof commitmentCategorySchema>
+export type Commitment = z.infer<typeof commitmentSchema>
+
+function defaultCommitmentCategories(): CommitmentCategory[] {
+  return [
+    {
+      id: 'health',
+      name: 'Health',
+      commitments: [
+        {
+          id: 'workout',
+          title: 'Workout',
+          detail: '',
+          target: '',
+          icon: 'dumbbell',
+          completed: false
+        }
+      ]
+    },
+    {
+      id: 'learning',
+      name: 'Learning',
+      commitments: [
+        {
+          id: 'reading',
+          title: 'Reading',
+          detail: '',
+          target: '',
+          icon: 'book-open',
+          completed: false
+        }
+      ]
+    },
+    {
+      id: 'faith',
+      name: 'Faith',
+      commitments: [
+        {
+          id: 'scripture',
+          title: 'Scripture',
+          detail: '',
+          target: '',
+          icon: 'cross',
+          completed: false
+        }
+      ]
+    }
+  ]
+}
+
+const dailyEntryBaseSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   intention: z.string().max(240),
   priorities: z.array(prioritySchema).max(3),
-  commitments: dailyCommitmentsSchema.default({
-    workout: { scheduled: false, completed: false, plan: '' },
-    reading: { completed: false, book: '', target: '' },
-    faith: { completed: false, reference: '', reflection: '' }
-  }),
+  commitmentCategories: z
+    .array(commitmentCategorySchema)
+    .max(16)
+    .default(defaultCommitmentCategories),
   mood: z.number().int().min(1).max(10),
   energy: z.number().int().min(1).max(10),
   reflection: z.string().max(2000),
@@ -42,7 +86,43 @@ export const dailyEntrySchema = z.object({
   updatedAt: z.string()
 })
 
-export type DailyEntry = z.infer<typeof dailyEntrySchema>
+type LegacyCommitments = {
+  workout?: { completed?: boolean; plan?: string }
+  reading?: { completed?: boolean; book?: string; target?: string }
+  faith?: { completed?: boolean; reference?: string }
+}
+
+function migrateLegacyEntry(value: unknown): unknown {
+  if (!value || typeof value !== 'object' || 'commitmentCategories' in value) return value
+
+  const entry = value as Record<string, unknown>
+  const legacy = entry.commitments as LegacyCommitments | undefined
+  if (!legacy) return value
+
+  const categories = defaultCommitmentCategories()
+  const workout = categories[0]?.commitments[0]
+  const reading = categories[1]?.commitments[0]
+  const scripture = categories[2]?.commitments[0]
+
+  if (workout && legacy.workout) {
+    workout.completed = Boolean(legacy.workout.completed)
+    workout.detail = legacy.workout.plan ?? ''
+  }
+  if (reading && legacy.reading) {
+    reading.completed = Boolean(legacy.reading.completed)
+    reading.detail = legacy.reading.book ?? ''
+    reading.target = legacy.reading.target ?? ''
+  }
+  if (scripture && legacy.faith) {
+    scripture.completed = Boolean(legacy.faith.completed)
+    scripture.detail = legacy.faith.reference ?? ''
+  }
+
+  return { ...entry, commitmentCategories: categories }
+}
+
+export const dailyEntrySchema = z.preprocess(migrateLegacyEntry, dailyEntryBaseSchema)
+export type DailyEntry = z.infer<typeof dailyEntryBaseSchema>
 
 export function createEmptyEntry(date: string): DailyEntry {
   return {
@@ -53,11 +133,7 @@ export function createEmptyEntry(date: string): DailyEntry {
       text: '',
       completed: false
     })),
-    commitments: {
-      workout: { scheduled: false, completed: false, plan: '' },
-      reading: { completed: false, book: '', target: '' },
-      faith: { completed: false, reference: '', reflection: '' }
-    },
+    commitmentCategories: defaultCommitmentCategories(),
     mood: 5,
     energy: 5,
     reflection: '',
