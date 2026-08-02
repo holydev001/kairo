@@ -158,15 +158,6 @@ export function App(): React.JSX.Element {
     setShowCategoryForm(false)
   }
 
-  const deleteCategory = (categoryId: string): void => {
-    setEntry((current) => ({
-      ...current,
-      commitmentCategories: current.commitmentCategories.filter(
-        (category) => category.id !== categoryId
-      )
-    }))
-  }
-
   const addCommitment = (): void => {
     const title = draft.title.trim()
     if (!title || !draft.categoryId) return
@@ -470,89 +461,63 @@ export function App(): React.JSX.Element {
             </div>
           )}
 
-          <div className="commitment-categories">
-            {entry.commitmentCategories.map((category) => (
-              <section className="commitment-category" key={category.id}>
-                <div className="category-heading">
-                  <div>
-                    <p className="eyebrow">CATEGORY</p>
-                    <h3>{category.name}</h3>
-                  </div>
-                  <button
-                    onClick={() => deleteCategory(category.id)}
-                    aria-label={`Delete ${category.name} category`}
-                    title="Delete category"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-                {category.commitments.length ? (
-                  <div className="commitment-grid">
-                    {category.commitments.map((commitment) => (
-                      <article
-                        className={commitment.completed ? 'commitment complete' : 'commitment'}
-                        key={commitment.id}
+          <div className="commitment-grid">
+            {entry.commitmentCategories.flatMap((category) =>
+              category.commitments.map((commitment) => (
+                <article
+                  className={commitment.completed ? 'commitment complete' : 'commitment'}
+                  key={commitment.id}
+                >
+                  <div className="commitment-topline">
+                    <CommitmentIcon name={commitment.icon} />
+                    <div className="commitment-controls">
+                      <button
+                        onClick={() => deleteCommitment(category.id, commitment.id)}
+                        aria-label={`Delete ${commitment.title}`}
                       >
-                        <div className="commitment-topline">
-                          <CommitmentIcon name={commitment.icon} />
-                          <div className="commitment-controls">
-                            <button
-                              onClick={() => deleteCommitment(category.id, commitment.id)}
-                              aria-label={`Delete ${commitment.title}`}
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                            <button
-                              aria-label={`Toggle ${commitment.title}`}
-                              onClick={() =>
-                                updateCommitment(category.id, commitment.id, {
-                                  completed: !commitment.completed
-                                })
-                              }
-                            >
-                              {commitment.completed ? <Check size={13} /> : <Circle size={17} />}
-                            </button>
-                          </div>
-                        </div>
-                        <div>
-                          <p className="eyebrow">{category.name.toUpperCase()}</p>
-                          <h3>{commitment.title}</h3>
-                        </div>
-                        <div className="commitment-fields">
-                          <input
-                            value={commitment.detail}
-                            onChange={(event) =>
-                              updateCommitment(category.id, commitment.id, {
-                                detail: event.target.value
-                              })
-                            }
-                            placeholder="Add detail"
-                            maxLength={160}
-                          />
-                          <input
-                            value={commitment.target}
-                            onChange={(event) =>
-                              updateCommitment(category.id, commitment.id, {
-                                target: event.target.value
-                              })
-                            }
-                            placeholder="Target"
-                            maxLength={80}
-                          />
-                        </div>
-                      </article>
-                    ))}
+                        <Trash2 size={13} />
+                      </button>
+                      <button
+                        aria-label={`Toggle ${commitment.title}`}
+                        onClick={() =>
+                          updateCommitment(category.id, commitment.id, {
+                            completed: !commitment.completed
+                          })
+                        }
+                      >
+                        {commitment.completed ? <Check size={13} /> : <Circle size={17} />}
+                      </button>
+                    </div>
                   </div>
-                ) : (
-                  <button
-                    className="empty-category"
-                    onClick={() => openCommitmentForm(category.id)}
-                  >
-                    <Plus size={14} /> Add the first commitment
-                  </button>
-                )}
-              </section>
-            ))}
+                  <div>
+                    <p className="eyebrow">{category.name.toUpperCase()}</p>
+                    <h3>{commitment.title}</h3>
+                  </div>
+                  <div className="commitment-fields">
+                    <input
+                      value={commitment.detail}
+                      onChange={(event) =>
+                        updateCommitment(category.id, commitment.id, {
+                          detail: event.target.value
+                        })
+                      }
+                      placeholder="Add detail"
+                      maxLength={160}
+                    />
+                    <input
+                      value={commitment.target}
+                      onChange={(event) =>
+                        updateCommitment(category.id, commitment.id, {
+                          target: event.target.value
+                        })
+                      }
+                      placeholder="Target"
+                      maxLength={80}
+                    />
+                  </div>
+                </article>
+              ))
+            )}
           </div>
         </section>
 

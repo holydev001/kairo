@@ -370,26 +370,6 @@ p {
   background: #b89550;
   color: #0b0b0a;
 }
-.commitment-categories {
-  display: grid;
-}
-.commitment-category {
-  padding: 27px 0 0;
-  border-top: 1px solid #292823;
-}
-.category-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 18px;
-}
-.category-heading h3 {
-  margin: 7px 0 0;
-  font-family: 'Instrument Serif';
-  font-size: 23px;
-  font-weight: 400;
-}
-.category-heading > button,
 .icon-action {
   display: grid;
   place-items: center;
@@ -399,14 +379,13 @@ p {
   background: transparent;
   color: #5f5c55;
 }
-.category-heading > button:hover,
 .icon-action:hover,
 .commitment-controls button:first-child:hover {
   color: #b66f62;
 }
 .commitment-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 .commitment {
   position: relative;
@@ -488,18 +467,6 @@ p {
   grid-template-columns: minmax(0, 1.4fr) minmax(70px, 0.6fr);
   gap: 12px;
   align-self: end;
-}
-.empty-category {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 26px;
-  border: 0;
-  border-radius: 0;
-  padding: 10px 0;
-  background: transparent;
-  color: #8c7952;
-  font-size: 11px;
 }
 .inline-form,
 .commitment-form {
@@ -674,7 +641,7 @@ p {
     gap: 22px;
   }
   .commitment-grid {
-    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    grid-template-columns: 1fr;
   }
   .commitment {
     min-height: 178px;
