@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   BookOpen,
   Check,
+  ChevronDown,
   Circle,
   Feather,
   Home,
@@ -197,6 +198,7 @@ export function App(): React.JSX.Element {
 
   return (
     <main className="shell">
+      <div className="window-drag-region" aria-hidden="true" />
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-mark" title="Kai — change for the better" aria-hidden="true">
@@ -403,18 +405,21 @@ export function App(): React.JSX.Element {
                     maxLength={80}
                   />
                 </label>
-                <label>
+                <label className="select-field">
                   <span>CATEGORY</span>
-                  <select
-                    value={draft.categoryId}
-                    onChange={(event) => setDraft({ ...draft, categoryId: event.target.value })}
-                  >
-                    {entry.commitmentCategories.map((category) => (
-                      <option value={category.id} key={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="select-control">
+                    <select
+                      value={draft.categoryId}
+                      onChange={(event) => setDraft({ ...draft, categoryId: event.target.value })}
+                    >
+                      {entry.commitmentCategories.map((category) => (
+                        <option value={category.id} key={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={15} aria-hidden="true" />
+                  </div>
                 </label>
                 <label>
                   <span>DETAIL</span>

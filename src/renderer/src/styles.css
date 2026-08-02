@@ -28,6 +28,15 @@ button {
   overflow: hidden;
   background: radial-gradient(circle at 75% 0%, #17150f 0, transparent 33%), #0b0b0a;
 }
+.window-drag-region {
+  position: fixed;
+  z-index: 2;
+  top: 0;
+  right: 148px;
+  left: 0;
+  height: 44px;
+  -webkit-app-region: drag;
+}
 .sidebar {
   position: relative;
   display: flex;
@@ -36,6 +45,7 @@ button {
   border-right: 1px solid #24231f;
   background: #0e0e0d;
   height: 100vh;
+  -webkit-app-region: no-drag;
 }
 .brand {
   display: flex;
@@ -138,6 +148,7 @@ button {
   padding: 96px 54px 64px;
   overflow-y: auto;
   scrollbar-width: none;
+  -webkit-app-region: no-drag;
 }
 .content::-webkit-scrollbar {
   display: none;
@@ -508,6 +519,27 @@ p {
 }
 .form-fields select {
   color-scheme: dark;
+  appearance: none;
+  cursor: pointer;
+  padding-right: 30px;
+}
+.select-control {
+  position: relative;
+}
+.select-control svg {
+  position: absolute;
+  top: 50%;
+  right: 1px;
+  color: #8f784b;
+  pointer-events: none;
+  transform: translateY(-50%);
+}
+.select-control:focus-within select {
+  border-color: #9e8048;
+}
+.form-fields option {
+  background: #121210;
+  color: #ddd8ce;
 }
 .form-heading {
   display: flex;
@@ -664,6 +696,11 @@ p {
     border-right: 0;
     border-bottom: 1px solid #24231f;
     height: 62px;
+  }
+  .window-drag-region {
+    right: 142px;
+    left: 58px;
+    height: 38px;
   }
   .brand {
     justify-content: flex-start;
