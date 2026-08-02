@@ -314,6 +314,102 @@ p {
   color: #d3b36e;
   text-align: right;
 }
+.commitments-section {
+  padding: 42px 0 4px;
+  border-bottom: 1px solid #292823;
+}
+.commitments-heading {
+  align-items: end;
+  margin-bottom: 24px;
+}
+.commitments-heading h2 {
+  margin: 9px 0 0;
+  font-family: 'Instrument Serif';
+  font-size: 27px;
+  font-weight: 400;
+}
+.commitments-heading > span {
+  color: #8d7b57;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+}
+.commitment-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.commitment {
+  position: relative;
+  display: grid;
+  min-width: 0;
+  min-height: 210px;
+  padding: 22px 24px 26px;
+  border-top: 1px solid #292823;
+  background: #0e0e0d;
+  transition: background 180ms ease;
+}
+.commitment + .commitment {
+  border-left: 1px solid #292823;
+}
+.commitment.complete {
+  background: linear-gradient(145deg, rgba(184, 149, 80, 0.09), rgba(14, 14, 13, 0) 66%), #0e0e0d;
+}
+.commitment.complete::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 1px;
+  background: #b89550;
+  content: '';
+}
+.commitment-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #806b41;
+}
+.commitment-topline button {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  background: transparent;
+  color: #65625b;
+}
+.commitment.complete .commitment-topline button {
+  background: #b89550;
+  color: #0b0b0a;
+}
+.commitment h3 {
+  margin: 7px 0 0;
+  font-family: 'Instrument Serif';
+  font-size: 24px;
+  font-weight: 400;
+}
+.commitment input {
+  align-self: end;
+  width: 100%;
+  border: 0;
+  border-bottom: 1px solid #292823;
+  border-radius: 0;
+  padding: 6px 0 9px;
+  outline: none;
+  background: transparent;
+  color: #d8d4cb;
+  font-size: 12px;
+}
+.commitment input::placeholder {
+  color: #55534e;
+}
+.commitment-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(70px, 0.6fr);
+  gap: 12px;
+  align-self: end;
+}
 .reflection {
   display: grid;
   grid-template-columns: 0.65fr 1.35fr;
@@ -401,6 +497,15 @@ p {
     grid-template-columns: 1fr;
     gap: 22px;
   }
+  .commitment-grid {
+    grid-template-columns: 1fr;
+  }
+  .commitment {
+    min-height: 178px;
+  }
+  .commitment + .commitment {
+    border-left: 0;
+  }
 }
 @media (max-width: 720px) {
   .shell {
@@ -458,6 +563,10 @@ p {
   }
   .reflection textarea {
     min-height: 132px;
+  }
+  .commitments-heading {
+    align-items: flex-start;
+    gap: 24px;
   }
 }
 @media (max-width: 560px) {

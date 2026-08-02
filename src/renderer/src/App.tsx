@@ -3,9 +3,12 @@ import {
   BookOpen,
   Check,
   Circle,
+  Cross,
+  Dumbbell,
   Feather,
   Home,
   LoaderCircle,
+  Library,
   Settings,
   Sparkles,
   Target
@@ -49,12 +52,16 @@ export function App(): React.JSX.Element {
   const [status, setStatus] = useState<'loading' | 'saved' | 'saving' | 'error'>('loading')
   const [hydrated, setHydrated] = useState(false)
   const completed = entry.priorities.filter((priority) => priority.completed).length
+  const commitmentsCompleted = Object.values(entry.commitments).filter(
+    (commitment) => commitment.completed
+  ).length
   const progress = useMemo(() => {
-    const intention = entry.intention.trim() ? 20 : 0
-    const priorities = Math.round((completed / 3) * 60)
-    const reflection = entry.reflection.trim() ? 20 : 0
-    return intention + priorities + reflection
-  }, [completed, entry.intention, entry.reflection])
+    const intention = entry.intention.trim() ? 15 : 0
+    const priorities = Math.round((completed / 3) * 40)
+    const commitments = Math.round((commitmentsCompleted / 3) * 30)
+    const reflection = entry.reflection.trim() ? 15 : 0
+    return intention + priorities + commitments + reflection
+  }, [commitmentsCompleted, completed, entry.intention, entry.reflection])
 
   useEffect(() => {
     void window.kairo.journal
@@ -88,6 +95,19 @@ export function App(): React.JSX.Element {
       priorities: current.priorities.map((priority, priorityIndex) =>
         priorityIndex === index ? { ...priority, ...patch } : priority
       )
+    }))
+  }
+
+  const updateCommitment = <K extends keyof DailyEntry['commitments']>(
+    key: K,
+    patch: Partial<DailyEntry['commitments'][K]>
+  ): void => {
+    setEntry((current) => ({
+      ...current,
+      commitments: {
+        ...current.commitments,
+        [key]: { ...current.commitments[key], ...patch }
+      }
     }))
   }
 
@@ -227,6 +247,108 @@ export function App(): React.JSX.Element {
             </div>
           </section>
         </div>
+
+        <section className="commitments-section">
+          <div className="section-title commitments-heading">
+            <div>
+              <p className="eyebrow">DAILY COMMITMENTS</p>
+              <h2>Keep faith with yourself.</h2>
+            </div>
+            <span>{commitmentsCompleted} / 3 KEPT</span>
+          </div>
+          <div className="commitment-grid">
+            <article
+              className={entry.commitments.workout.completed ? 'commitment complete' : 'commitment'}
+            >
+              <div className="commitment-topline">
+                <Dumbbell size={18} />
+                <button
+                  aria-label="Toggle workout completion"
+                  onClick={() =>
+                    updateCommitment('workout', {
+                      completed: !entry.commitments.workout.completed,
+                      scheduled: true
+                    })
+                  }
+                >
+                  {entry.commitments.workout.completed ? <Check size={13} /> : <Circle size={17} />}
+                </button>
+              </div>
+              <div>
+                <p className="eyebrow">HEALTH</p>
+                <h3>Workout</h3>
+              </div>
+              <input
+                value={entry.commitments.workout.plan}
+                onChange={(event) =>
+                  updateCommitment('workout', { plan: event.target.value, scheduled: true })
+                }
+                placeholder="What is the plan?"
+                maxLength={160}
+              />
+            </article>
+
+            <article
+              className={entry.commitments.reading.completed ? 'commitment complete' : 'commitment'}
+            >
+              <div className="commitment-topline">
+                <Library size={18} />
+                <button
+                  aria-label="Toggle reading completion"
+                  onClick={() =>
+                    updateCommitment('reading', { completed: !entry.commitments.reading.completed })
+                  }
+                >
+                  {entry.commitments.reading.completed ? <Check size={13} /> : <Circle size={17} />}
+                </button>
+              </div>
+              <div>
+                <p className="eyebrow">LEARNING</p>
+                <h3>Reading</h3>
+              </div>
+              <div className="commitment-fields">
+                <input
+                  value={entry.commitments.reading.book}
+                  onChange={(event) => updateCommitment('reading', { book: event.target.value })}
+                  placeholder="Current book"
+                  maxLength={160}
+                />
+                <input
+                  value={entry.commitments.reading.target}
+                  onChange={(event) => updateCommitment('reading', { target: event.target.value })}
+                  placeholder="Pages or time"
+                  maxLength={80}
+                />
+              </div>
+            </article>
+
+            <article
+              className={entry.commitments.faith.completed ? 'commitment complete' : 'commitment'}
+            >
+              <div className="commitment-topline">
+                <Cross size={18} />
+                <button
+                  aria-label="Toggle faith reading completion"
+                  onClick={() =>
+                    updateCommitment('faith', { completed: !entry.commitments.faith.completed })
+                  }
+                >
+                  {entry.commitments.faith.completed ? <Check size={13} /> : <Circle size={17} />}
+                </button>
+              </div>
+              <div>
+                <p className="eyebrow">FAITH</p>
+                <h3>Scripture</h3>
+              </div>
+              <input
+                value={entry.commitments.faith.reference}
+                onChange={(event) => updateCommitment('faith', { reference: event.target.value })}
+                placeholder="Today’s reference"
+                maxLength={120}
+              />
+            </article>
+          </div>
+        </section>
 
         <section className="reflection">
           <div>
