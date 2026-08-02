@@ -59,6 +59,7 @@ function createWindow(): void {
 app.whenReady().then(async () => {
   journal = await JournalDatabase.open(join(app.getPath('userData'), 'kairo.sqlite'))
   ipcMain.handle('journal:get', (_event, date: string) => journal.get(date))
+  ipcMain.handle('journal:list', (_event, limit?: number) => journal.list(limit))
   ipcMain.handle('journal:save', (_event, entry: unknown) => journal.save(entry))
   createWindow()
   app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow())

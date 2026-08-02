@@ -17,6 +17,7 @@ import {
 import { createEmptyEntry, type DailyEntry } from '../../shared/journal'
 import { commitmentIconNames } from './commitment-icon-library'
 import { CommitmentIcon } from './commitment-icons'
+import { HistoryView } from './HistoryView'
 
 const today = new Date().toISOString().slice(0, 10)
 const kaizenThoughts = [
@@ -50,6 +51,7 @@ function thoughtForToday(): string {
 }
 
 export function App(): React.JSX.Element {
+  const [activeView, setActiveView] = useState<'command' | 'history'>('command')
   const [entry, setEntry] = useState<DailyEntry>(() => createEmptyEntry(today))
   const [status, setStatus] = useState<'loading' | 'saved' | 'saving' | 'error'>('loading')
   const [hydrated, setHydrated] = useState(false)
@@ -225,7 +227,10 @@ export function App(): React.JSX.Element {
           </span>
         </div>
         <nav>
-          <button className="active">
+          <button
+            className={activeView === 'command' ? 'active' : ''}
+            onClick={() => setActiveView('command')}
+          >
             <Home size={17} />
             <span className="nav-label">Command Center</span>
           </button>
@@ -237,7 +242,10 @@ export function App(): React.JSX.Element {
             <Target size={17} />
             <span className="nav-label">Commitments</span>
           </button>
-          <button>
+          <button
+            className={activeView === 'history' ? 'active' : ''}
+            onClick={() => setActiveView('history')}
+          >
             <BookOpen size={17} />
             <span className="nav-label">History</span>
           </button>
@@ -253,321 +261,328 @@ export function App(): React.JSX.Element {
       </aside>
 
       <section className="content">
-        <header>
-          <div className="header-line">
-            <p className="eyebrow">{formattedDate().toUpperCase()}</p>
-            <span className={`save-state ${status}`}>
-              {status === 'saving' && <LoaderCircle size={12} />}
-              {status === 'loading'
-                ? 'Opening journal'
-                : status === 'error'
-                  ? 'Save failed'
-                  : status}
-            </span>
-          </div>
-          <h1>{greeting()}</h1>
-          <p className="lede">“{thoughtForToday()}”</p>
-        </header>
-
-        <div className="rule" />
-        <section className="mission">
-          <label className="eyebrow" htmlFor="intention">
-            TODAY'S INTENTION
-          </label>
-          <input
-            id="intention"
-            value={entry.intention}
-            onChange={(event) => setEntry({ ...entry, intention: event.target.value })}
-            placeholder="What matters most today?"
-            maxLength={240}
-          />
-        </section>
-
-        <div className="grid">
-          <section>
-            <div className="section-title">
-              <p className="eyebrow">PRIORITIES</p>
-              <span>{completed} / 3</span>
-            </div>
-            <div className="checklist">
-              {entry.priorities.map((priority, index) => (
-                <div className="check" key={priority.id}>
-                  <button
-                    className={priority.completed ? 'done' : 'circle-button'}
-                    aria-label={`Toggle priority ${index + 1}`}
-                    onClick={() => updatePriority(index, { completed: !priority.completed })}
-                  >
-                    {priority.completed ? <Check size={13} /> : <Circle size={17} />}
-                  </button>
-                  <input
-                    value={priority.text}
-                    onChange={(event) => updatePriority(index, { text: event.target.value })}
-                    placeholder={`Priority ${index + 1}`}
-                    maxLength={140}
-                  />
-                </div>
-              ))}
-            </div>
-          </section>
-          <section className="pulse">
-            <p className="eyebrow">TODAY'S PULSE</p>
-            <div className="score">
-              <strong>{progress}</strong>
-              <span>/ 100</span>
-            </div>
-            <div className="progress">
-              <i style={{ width: `${progress}%` }} />
-            </div>
-            <div className="meters">
-              <label>
-                Mood{' '}
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={entry.mood}
-                  onChange={(event) => setEntry({ ...entry, mood: Number(event.target.value) })}
-                />
-                <span>{entry.mood}</span>
-              </label>
-              <label>
-                Energy{' '}
-                <input
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={entry.energy}
-                  onChange={(event) => setEntry({ ...entry, energy: Number(event.target.value) })}
-                />
-                <span>{entry.energy}</span>
-              </label>
-            </div>
-          </section>
-        </div>
-
-        <section className="commitments-section">
-          <div className="section-title commitments-heading">
-            <div>
-              <p className="eyebrow">DAILY COMMITMENTS</p>
-              <h2>Keep faith with yourself.</h2>
-            </div>
-            <div className="commitment-actions">
-              <span>
-                {commitmentsCompleted} / {commitments.length} KEPT
+        <div className="command-center" hidden={activeView !== 'command'}>
+          <header>
+            <div className="header-line">
+              <p className="eyebrow">{formattedDate().toUpperCase()}</p>
+              <span className={`save-state ${status}`}>
+                {status === 'saving' && <LoaderCircle size={12} />}
+                {status === 'loading'
+                  ? 'Opening journal'
+                  : status === 'error'
+                    ? 'Save failed'
+                    : status}
               </span>
-              <button onClick={() => setShowCategoryForm(true)}>
-                <Plus size={13} /> Category
-              </button>
-              <button className="primary-action" onClick={() => openCommitmentForm()}>
-                <Plus size={13} /> Commitment
-              </button>
             </div>
+            <h1>{greeting()}</h1>
+            <p className="lede">“{thoughtForToday()}”</p>
+          </header>
+
+          <div className="rule" />
+          <section className="mission">
+            <label className="eyebrow" htmlFor="intention">
+              TODAY'S INTENTION
+            </label>
+            <input
+              id="intention"
+              value={entry.intention}
+              onChange={(event) => setEntry({ ...entry, intention: event.target.value })}
+              placeholder="What matters most today?"
+              maxLength={240}
+            />
+          </section>
+
+          <div className="grid">
+            <section>
+              <div className="section-title">
+                <p className="eyebrow">PRIORITIES</p>
+                <span>{completed} / 3</span>
+              </div>
+              <div className="checklist">
+                {entry.priorities.map((priority, index) => (
+                  <div className="check" key={priority.id}>
+                    <button
+                      className={priority.completed ? 'done' : 'circle-button'}
+                      aria-label={`Toggle priority ${index + 1}`}
+                      onClick={() => updatePriority(index, { completed: !priority.completed })}
+                    >
+                      {priority.completed ? <Check size={13} /> : <Circle size={17} />}
+                    </button>
+                    <input
+                      value={priority.text}
+                      onChange={(event) => updatePriority(index, { text: event.target.value })}
+                      placeholder={`Priority ${index + 1}`}
+                      maxLength={140}
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+            <section className="pulse">
+              <p className="eyebrow">TODAY'S PULSE</p>
+              <div className="score">
+                <strong>{progress}</strong>
+                <span>/ 100</span>
+              </div>
+              <div className="progress">
+                <i style={{ width: `${progress}%` }} />
+              </div>
+              <div className="meters">
+                <label>
+                  Mood{' '}
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={entry.mood}
+                    onChange={(event) => setEntry({ ...entry, mood: Number(event.target.value) })}
+                  />
+                  <span>{entry.mood}</span>
+                </label>
+                <label>
+                  Energy{' '}
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={entry.energy}
+                    onChange={(event) => setEntry({ ...entry, energy: Number(event.target.value) })}
+                  />
+                  <span>{entry.energy}</span>
+                </label>
+              </div>
+            </section>
           </div>
 
-          {showCategoryForm && (
-            <div className="inline-form category-form">
-              <label>
-                <span>NEW CATEGORY</span>
-                <input
-                  autoFocus
-                  value={categoryName}
-                  onChange={(event) => setCategoryName(event.target.value)}
-                  onKeyDown={(event) => event.key === 'Enter' && addCategory()}
-                  placeholder="e.g. Creative"
-                  maxLength={50}
-                />
-              </label>
-              <button className="form-confirm" onClick={addCategory}>
-                Add category
-              </button>
-              <button
-                className="icon-action"
-                onClick={() => setShowCategoryForm(false)}
-                aria-label="Cancel"
-              >
-                <X size={16} />
-              </button>
-            </div>
-          )}
-
-          {showCommitmentForm && (
-            <div className="commitment-form">
-              <div className="form-heading">
-                <div>
-                  <p className="eyebrow">NEW COMMITMENT</p>
-                  <h3>Define the action.</h3>
-                </div>
-                <button
-                  className="icon-action"
-                  onClick={() => setShowCommitmentForm(false)}
-                  aria-label="Close"
-                >
-                  <X size={17} />
+          <section className="commitments-section">
+            <div className="section-title commitments-heading">
+              <div>
+                <p className="eyebrow">DAILY COMMITMENTS</p>
+                <h2>Keep faith with yourself.</h2>
+              </div>
+              <div className="commitment-actions">
+                <span>
+                  {commitmentsCompleted} / {commitments.length} KEPT
+                </span>
+                <button onClick={() => setShowCategoryForm(true)}>
+                  <Plus size={13} /> Category
+                </button>
+                <button className="primary-action" onClick={() => openCommitmentForm()}>
+                  <Plus size={13} /> Commitment
                 </button>
               </div>
-              <div className="form-fields">
+            </div>
+
+            {showCategoryForm && (
+              <div className="inline-form category-form">
                 <label>
-                  <span>NAME</span>
+                  <span>NEW CATEGORY</span>
                   <input
                     autoFocus
-                    value={draft.title}
-                    onChange={(event) => setDraft({ ...draft, title: event.target.value })}
-                    placeholder="Morning walk"
-                    maxLength={80}
+                    value={categoryName}
+                    onChange={(event) => setCategoryName(event.target.value)}
+                    onKeyDown={(event) => event.key === 'Enter' && addCategory()}
+                    placeholder="e.g. Creative"
+                    maxLength={50}
                   />
                 </label>
-                <div className="select-field">
-                  <span>CATEGORY</span>
-                  <div className="select-control">
-                    <button
-                      className={showCategoryMenu ? 'select-trigger open' : 'select-trigger'}
-                      type="button"
-                      aria-haspopup="listbox"
-                      aria-expanded={showCategoryMenu}
-                      onClick={() => setShowCategoryMenu((current) => !current)}
-                    >
-                      <span>{selectedCategoryName}</span>
-                      <ChevronDown size={15} aria-hidden="true" />
-                    </button>
-                    {showCategoryMenu && (
-                      <div className="select-menu" role="listbox" aria-label="Commitment category">
-                        {entry.commitmentCategories.map((category) => (
-                          <button
-                            className={draft.categoryId === category.id ? 'selected' : ''}
-                            type="button"
-                            role="option"
-                            aria-selected={draft.categoryId === category.id}
-                            key={category.id}
-                            onClick={() => {
-                              setDraft({ ...draft, categoryId: category.id })
-                              setShowCategoryMenu(false)
-                            }}
-                          >
-                            <span>{category.name}</span>
-                            {draft.categoryId === category.id && <Check size={13} />}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <label>
-                  <span>DETAIL</span>
-                  <input
-                    value={draft.detail}
-                    onChange={(event) => setDraft({ ...draft, detail: event.target.value })}
-                    placeholder="What does keeping it mean?"
-                    maxLength={160}
-                  />
-                </label>
-                <label>
-                  <span>TARGET</span>
-                  <input
-                    value={draft.target}
-                    onChange={(event) => setDraft({ ...draft, target: event.target.value })}
-                    placeholder="30 min"
-                    maxLength={80}
-                  />
-                </label>
-              </div>
-              <div className="icon-picker">
-                <p>CHOOSE AN ICON</p>
-                <div>
-                  {commitmentIconNames.map((name) => (
-                    <button
-                      className={draft.icon === name ? 'selected' : ''}
-                      key={name}
-                      onClick={() => setDraft({ ...draft, icon: name })}
-                      aria-label={`Use ${name} icon`}
-                      title={name}
-                    >
-                      <CommitmentIcon name={name} size={17} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button
-                className="form-confirm"
-                disabled={!draft.title.trim() || !draft.categoryId}
-                onClick={addCommitment}
-              >
-                Add commitment
-              </button>
-            </div>
-          )}
-
-          <div className="commitment-grid">
-            {entry.commitmentCategories.flatMap((category) =>
-              category.commitments.map((commitment) => (
-                <article
-                  className={commitment.completed ? 'commitment complete' : 'commitment'}
-                  key={commitment.id}
+                <button className="form-confirm" onClick={addCategory}>
+                  Add category
+                </button>
+                <button
+                  className="icon-action"
+                  onClick={() => setShowCategoryForm(false)}
+                  aria-label="Cancel"
                 >
-                  <div className="commitment-topline">
-                    <CommitmentIcon name={commitment.icon} />
-                    <div className="commitment-controls">
-                      <button
-                        onClick={() => deleteCommitment(category.id, commitment.id)}
-                        aria-label={`Delete ${commitment.title}`}
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                      <button
-                        aria-label={`Toggle ${commitment.title}`}
-                        onClick={() =>
-                          updateCommitment(category.id, commitment.id, {
-                            completed: !commitment.completed
-                          })
-                        }
-                      >
-                        {commitment.completed ? <Check size={13} /> : <Circle size={17} />}
-                      </button>
-                    </div>
-                  </div>
+                  <X size={16} />
+                </button>
+              </div>
+            )}
+
+            {showCommitmentForm && (
+              <div className="commitment-form">
+                <div className="form-heading">
                   <div>
-                    <p className="eyebrow">{category.name.toUpperCase()}</p>
-                    <h3>{commitment.title}</h3>
+                    <p className="eyebrow">NEW COMMITMENT</p>
+                    <h3>Define the action.</h3>
                   </div>
-                  <div className="commitment-fields">
+                  <button
+                    className="icon-action"
+                    onClick={() => setShowCommitmentForm(false)}
+                    aria-label="Close"
+                  >
+                    <X size={17} />
+                  </button>
+                </div>
+                <div className="form-fields">
+                  <label>
+                    <span>NAME</span>
                     <input
-                      value={commitment.detail}
-                      onChange={(event) =>
-                        updateCommitment(category.id, commitment.id, {
-                          detail: event.target.value
-                        })
-                      }
-                      placeholder="Add detail"
-                      maxLength={160}
-                    />
-                    <input
-                      value={commitment.target}
-                      onChange={(event) =>
-                        updateCommitment(category.id, commitment.id, {
-                          target: event.target.value
-                        })
-                      }
-                      placeholder="Target"
+                      autoFocus
+                      value={draft.title}
+                      onChange={(event) => setDraft({ ...draft, title: event.target.value })}
+                      placeholder="Morning walk"
                       maxLength={80}
                     />
+                  </label>
+                  <div className="select-field">
+                    <span>CATEGORY</span>
+                    <div className="select-control">
+                      <button
+                        className={showCategoryMenu ? 'select-trigger open' : 'select-trigger'}
+                        type="button"
+                        aria-haspopup="listbox"
+                        aria-expanded={showCategoryMenu}
+                        onClick={() => setShowCategoryMenu((current) => !current)}
+                      >
+                        <span>{selectedCategoryName}</span>
+                        <ChevronDown size={15} aria-hidden="true" />
+                      </button>
+                      {showCategoryMenu && (
+                        <div
+                          className="select-menu"
+                          role="listbox"
+                          aria-label="Commitment category"
+                        >
+                          {entry.commitmentCategories.map((category) => (
+                            <button
+                              className={draft.categoryId === category.id ? 'selected' : ''}
+                              type="button"
+                              role="option"
+                              aria-selected={draft.categoryId === category.id}
+                              key={category.id}
+                              onClick={() => {
+                                setDraft({ ...draft, categoryId: category.id })
+                                setShowCategoryMenu(false)
+                              }}
+                            >
+                              <span>{category.name}</span>
+                              {draft.categoryId === category.id && <Check size={13} />}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </article>
-              ))
+                  <label>
+                    <span>DETAIL</span>
+                    <input
+                      value={draft.detail}
+                      onChange={(event) => setDraft({ ...draft, detail: event.target.value })}
+                      placeholder="What does keeping it mean?"
+                      maxLength={160}
+                    />
+                  </label>
+                  <label>
+                    <span>TARGET</span>
+                    <input
+                      value={draft.target}
+                      onChange={(event) => setDraft({ ...draft, target: event.target.value })}
+                      placeholder="30 min"
+                      maxLength={80}
+                    />
+                  </label>
+                </div>
+                <div className="icon-picker">
+                  <p>CHOOSE AN ICON</p>
+                  <div>
+                    {commitmentIconNames.map((name) => (
+                      <button
+                        className={draft.icon === name ? 'selected' : ''}
+                        key={name}
+                        onClick={() => setDraft({ ...draft, icon: name })}
+                        aria-label={`Use ${name} icon`}
+                        title={name}
+                      >
+                        <CommitmentIcon name={name} size={17} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  className="form-confirm"
+                  disabled={!draft.title.trim() || !draft.categoryId}
+                  onClick={addCommitment}
+                >
+                  Add commitment
+                </button>
+              </div>
             )}
-          </div>
-        </section>
 
-        <section className="reflection">
-          <div>
-            <p className="eyebrow">EVENING REFLECTION</p>
-            <h3>What moved you forward today?</h3>
-          </div>
-          <textarea
-            value={entry.reflection}
-            onChange={(event) => setEntry({ ...entry, reflection: event.target.value })}
-            placeholder="Write a few honest lines…"
-            maxLength={2000}
-          />
-        </section>
+            <div className="commitment-grid">
+              {entry.commitmentCategories.flatMap((category) =>
+                category.commitments.map((commitment) => (
+                  <article
+                    className={commitment.completed ? 'commitment complete' : 'commitment'}
+                    key={commitment.id}
+                  >
+                    <div className="commitment-topline">
+                      <CommitmentIcon name={commitment.icon} />
+                      <div className="commitment-controls">
+                        <button
+                          onClick={() => deleteCommitment(category.id, commitment.id)}
+                          aria-label={`Delete ${commitment.title}`}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                        <button
+                          aria-label={`Toggle ${commitment.title}`}
+                          onClick={() =>
+                            updateCommitment(category.id, commitment.id, {
+                              completed: !commitment.completed
+                            })
+                          }
+                        >
+                          {commitment.completed ? <Check size={13} /> : <Circle size={17} />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="eyebrow">{category.name.toUpperCase()}</p>
+                      <h3>{commitment.title}</h3>
+                    </div>
+                    <div className="commitment-fields">
+                      <input
+                        value={commitment.detail}
+                        onChange={(event) =>
+                          updateCommitment(category.id, commitment.id, {
+                            detail: event.target.value
+                          })
+                        }
+                        placeholder="Add detail"
+                        maxLength={160}
+                      />
+                      <input
+                        value={commitment.target}
+                        onChange={(event) =>
+                          updateCommitment(category.id, commitment.id, {
+                            target: event.target.value
+                          })
+                        }
+                        placeholder="Target"
+                        maxLength={80}
+                      />
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="reflection">
+            <div>
+              <p className="eyebrow">EVENING REFLECTION</p>
+              <h3>What moved you forward today?</h3>
+            </div>
+            <textarea
+              value={entry.reflection}
+              onChange={(event) => setEntry({ ...entry, reflection: event.target.value })}
+              placeholder="Write a few honest lines…"
+              maxLength={2000}
+            />
+          </section>
+        </div>
+        <HistoryView hidden={activeView !== 'history'} />
       </section>
     </main>
   )
