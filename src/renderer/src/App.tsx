@@ -55,6 +55,7 @@ export function App(): React.JSX.Element {
   const [hydrated, setHydrated] = useState(false)
   const [showCommitmentForm, setShowCommitmentForm] = useState(false)
   const [showCategoryForm, setShowCategoryForm] = useState(false)
+  const [showCategoryMenu, setShowCategoryMenu] = useState(false)
   const [categoryName, setCategoryName] = useState('')
   const [draft, setDraft] = useState({
     title: '',
@@ -196,9 +197,19 @@ export function App(): React.JSX.Element {
     setShowCommitmentForm(true)
   }
 
+  const selectedCategoryName =
+    entry.commitmentCategories.find((category) => category.id === draft.categoryId)?.name ??
+    'Choose category'
+
   return (
     <main className="shell">
-      <div className="window-drag-region" aria-hidden="true" />
+      <div className="window-titlebar">
+        <div className="window-titlebar-brand" aria-hidden="true">
+          <span>改</span>
+          <strong>KAIRO</strong>
+        </div>
+        <div className="window-drag-surface" aria-hidden="true" />
+      </div>
       <aside className="sidebar">
         <div className="brand">
           <span className="brand-mark" title="Kai — change for the better" aria-hidden="true">
@@ -405,22 +416,41 @@ export function App(): React.JSX.Element {
                     maxLength={80}
                   />
                 </label>
-                <label className="select-field">
+                <div className="select-field">
                   <span>CATEGORY</span>
                   <div className="select-control">
-                    <select
-                      value={draft.categoryId}
-                      onChange={(event) => setDraft({ ...draft, categoryId: event.target.value })}
+                    <button
+                      className={showCategoryMenu ? 'select-trigger open' : 'select-trigger'}
+                      type="button"
+                      aria-haspopup="listbox"
+                      aria-expanded={showCategoryMenu}
+                      onClick={() => setShowCategoryMenu((current) => !current)}
                     >
-                      {entry.commitmentCategories.map((category) => (
-                        <option value={category.id} key={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown size={15} aria-hidden="true" />
+                      <span>{selectedCategoryName}</span>
+                      <ChevronDown size={15} aria-hidden="true" />
+                    </button>
+                    {showCategoryMenu && (
+                      <div className="select-menu" role="listbox" aria-label="Commitment category">
+                        {entry.commitmentCategories.map((category) => (
+                          <button
+                            className={draft.categoryId === category.id ? 'selected' : ''}
+                            type="button"
+                            role="option"
+                            aria-selected={draft.categoryId === category.id}
+                            key={category.id}
+                            onClick={() => {
+                              setDraft({ ...draft, categoryId: category.id })
+                              setShowCategoryMenu(false)
+                            }}
+                          >
+                            <span>{category.name}</span>
+                            {draft.categoryId === category.id && <Check size={13} />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </label>
+                </div>
                 <label>
                   <span>DETAIL</span>
                   <input

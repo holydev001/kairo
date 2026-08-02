@@ -25,26 +25,55 @@ button {
   display: grid;
   grid-template-columns: 250px 1fr;
   height: 100vh;
+  padding-top: 46px;
   overflow: hidden;
   background: radial-gradient(circle at 75% 0%, #17150f 0, transparent 33%), #0b0b0a;
 }
-.window-drag-region {
+.window-titlebar {
   position: fixed;
-  z-index: 2;
+  z-index: 100;
   top: 0;
-  right: 148px;
+  right: 0;
   left: 0;
-  height: 44px;
+  height: 46px;
+  border-bottom: 1px solid #24231f;
+  background: #0d0d0c;
+  user-select: none;
+}
+.window-drag-surface {
+  position: absolute;
+  inset: 0 142px 0 0;
   -webkit-app-region: drag;
+}
+.window-titlebar-brand {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 18px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 45px;
+  color: #78746b;
+  pointer-events: none;
+}
+.window-titlebar-brand span {
+  color: #b89550;
+  font-family: 'Yu Mincho', 'MS Mincho', serif;
+  font-size: 14px;
+}
+.window-titlebar-brand strong {
+  font-size: 9px;
+  letter-spacing: 0.2em;
 }
 .sidebar {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 70px 22px 28px;
+  padding: 24px 22px 28px;
   border-right: 1px solid #24231f;
   background: #0e0e0d;
-  height: 100vh;
+  height: calc(100vh - 46px);
   -webkit-app-region: no-drag;
 }
 .brand {
@@ -143,9 +172,9 @@ button {
 }
 .content {
   width: min(1040px, calc(100vw - 300px));
-  height: 100vh;
+  height: calc(100vh - 46px);
   margin: 0 auto;
-  padding: 96px 54px 64px;
+  padding: 50px 54px 64px;
   overflow-y: auto;
   scrollbar-width: none;
   -webkit-app-region: no-drag;
@@ -497,6 +526,7 @@ p {
 }
 .inline-form label span,
 .form-fields label span,
+.form-fields .select-field > span,
 .icon-picker > p {
   display: block;
   margin: 0 0 9px;
@@ -506,8 +536,7 @@ p {
   letter-spacing: 0.16em;
 }
 .inline-form input,
-.form-fields input,
-.form-fields select {
+.form-fields input {
   width: 100%;
   border: 0;
   border-bottom: 1px solid #35332d;
@@ -517,29 +546,76 @@ p {
   background: transparent;
   color: #ddd8ce;
 }
-.form-fields select {
-  color-scheme: dark;
-  appearance: none;
-  cursor: pointer;
-  padding-right: 30px;
-}
 .select-control {
   position: relative;
 }
-.select-control svg {
+.select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid #725c32;
+  border-radius: 0;
+  padding: 0 13px;
+  outline: none;
+  background: #0d0d0c;
+  color: #d8d3c9;
+  font-size: 12px;
+  text-align: left;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease;
+}
+.select-trigger:hover,
+.select-trigger:focus-visible,
+.select-trigger.open {
+  border-color: #c09a50;
+  background: #14130f;
+}
+.select-trigger svg {
+  flex: 0 0 auto;
+  color: #b89550;
+  transition: transform 150ms ease;
+}
+.select-trigger.open svg {
+  transform: rotate(180deg);
+}
+.select-menu {
   position: absolute;
-  top: 50%;
-  right: 1px;
-  color: #8f784b;
-  pointer-events: none;
-  transform: translateY(-50%);
+  z-index: 20;
+  top: calc(100% + 5px);
+  right: 0;
+  left: 0;
+  border: 1px solid #9e8048;
+  border-radius: 0;
+  padding: 4px;
+  background: #0d0d0c;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
 }
-.select-control:focus-within select {
-  border-color: #9e8048;
+.select-menu button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  padding: 10px 9px;
+  background: transparent;
+  color: #8f8b82;
+  font-size: 12px;
+  text-align: left;
 }
-.form-fields option {
-  background: #121210;
-  color: #ddd8ce;
+.select-menu button:hover {
+  background: #181712;
+  color: #eee9df;
+}
+.select-menu button.selected {
+  background: #1c1911;
+  color: #d8b568;
+}
+.select-menu button svg {
+  color: #c09a50;
 }
 .form-heading {
   display: flex;
@@ -618,7 +694,7 @@ p {
     grid-template-columns: 82px minmax(0, 1fr);
   }
   .sidebar {
-    padding: 66px 12px 24px;
+    padding: 20px 12px 24px;
   }
   .brand {
     justify-content: center;
@@ -640,7 +716,7 @@ p {
 }
 @media (max-width: 880px) {
   .content {
-    padding-top: 82px;
+    padding-top: 36px;
   }
   header h1 {
     font-size: clamp(40px, 7vw, 50px);
@@ -697,11 +773,6 @@ p {
     border-bottom: 1px solid #24231f;
     height: 62px;
   }
-  .window-drag-region {
-    right: 142px;
-    left: 58px;
-    height: 38px;
-  }
   .brand {
     justify-content: flex-start;
     margin: 0 auto 0 0;
@@ -727,7 +798,7 @@ p {
   }
   .content {
     width: 100%;
-    height: calc(100vh - 62px);
+    height: calc(100vh - 108px);
     padding: 46px 24px 50px;
   }
   .header-line {
