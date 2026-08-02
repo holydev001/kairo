@@ -45,6 +45,22 @@ export class JournalDatabase {
     return entry
   }
 
+  list(limit = 180): DailyEntry[] {
+    const safeLimit = Math.min(Math.max(Math.trunc(limit), 1), 365)
+    const statement = this.database.prepare(
+      'SELECT payload FROM daily_entries ORDER BY date DESC LIMIT :limit'
+    )
+    statement.bind({ ':limit': safeLimit })
+    const entries: DailyEntry[] = []
+
+    while (statement.step()) {
+      entries.push(dailyEntrySchema.parse(JSON.parse(String(statement.getAsObject().payload))))
+    }
+
+    statement.free()
+    return entries
+  }
+
   save(value: unknown): DailyEntry {
     const entry = dailyEntrySchema.parse({
       ...(typeof value === 'object' && value !== null ? value : {}),

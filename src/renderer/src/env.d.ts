@@ -6,6 +6,7 @@ declare global {
       platform: string
       journal: {
         get(date: string): Promise<DailyEntry>
+        list(limit?: number): Promise<DailyEntry[]>
         save(entry: DailyEntry): Promise<DailyEntry>
       }
     }
