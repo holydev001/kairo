@@ -1,71 +1,193 @@
-import { BookOpen, Check, Circle, Feather, Home, Settings, Sparkles, Target } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import {
+  BookOpen,
+  Check,
+  Circle,
+  Feather,
+  Home,
+  LoaderCircle,
+  Settings,
+  Sparkles,
+  Target
+} from 'lucide-react'
+import { createEmptyEntry, type DailyEntry } from '../../shared/journal'
 
-const priorities = ['Finish the Kairo foundation', 'Read 15 pages', 'Evening reflection']
+const today = new Date().toISOString().slice(0, 10)
+
+const kaizenThoughts = [
+  'Small steps, repeated with intention, become transformation.',
+  'Improve the system, and the result will follow.',
+  'Do not chase perfection. Refine what you practiced yesterday.',
+  'A quiet commitment kept daily is stronger than sudden motivation.',
+  'Notice honestly. Adjust deliberately. Continue patiently.',
+  'The direction matters more than the speed.',
+  'Become better by making the next action better.'
+] as const
+
+function greeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning.'
+  if (hour < 18) return 'Good afternoon.'
+  return 'Good evening.'
+}
+
+function formattedDate(): string {
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric'
+  }).format(new Date())
+}
+
+function thoughtForToday(): string {
+  const dayNumber = Math.floor(new Date(`${today}T00:00:00`).getTime() / 86_400_000)
+  return kaizenThoughts[dayNumber % kaizenThoughts.length] ?? kaizenThoughts[0]
+}
 
 export function App(): React.JSX.Element {
+  const [entry, setEntry] = useState<DailyEntry>(() => createEmptyEntry(today))
+  const [status, setStatus] = useState<'loading' | 'saved' | 'saving' | 'error'>('loading')
+  const [hydrated, setHydrated] = useState(false)
+  const completed = entry.priorities.filter((priority) => priority.completed).length
+  const progress = useMemo(() => {
+    const intention = entry.intention.trim() ? 20 : 0
+    const priorities = Math.round((completed / 3) * 60)
+    const reflection = entry.reflection.trim() ? 20 : 0
+    return intention + priorities + reflection
+  }, [completed, entry.intention, entry.reflection])
+
+  useEffect(() => {
+    void window.kairo.journal
+      .get(today)
+      .then((value) => {
+        setEntry(value)
+        setStatus('saved')
+        setHydrated(true)
+      })
+      .catch(() => setStatus('error'))
+  }, [])
+
+  useEffect(() => {
+    if (!hydrated) return
+    setStatus('saving')
+    const timeout = window.setTimeout(() => {
+      void window.kairo.journal
+        .save(entry)
+        .then(() => setStatus('saved'))
+        .catch(() => setStatus('error'))
+    }, 650)
+    return () => window.clearTimeout(timeout)
+  }, [entry, hydrated])
+
+  const updatePriority = (
+    index: number,
+    patch: Partial<DailyEntry['priorities'][number]>
+  ): void => {
+    setEntry((current) => ({
+      ...current,
+      priorities: current.priorities.map((priority, priorityIndex) =>
+        priorityIndex === index ? { ...priority, ...patch } : priority
+      )
+    }))
+  }
+
   return (
     <main className="shell">
       <aside className="sidebar">
         <div className="brand">
-          <span>K</span>
-          <strong>KAIRO</strong>
+          <span className="brand-mark" title="Kai — change for the better" aria-hidden="true">
+            <span className="brand-frame" />
+            <span className="brand-glyph" lang="ja">
+              改
+            </span>
+            <i />
+          </span>
+          <span className="brand-name">
+            <strong>KAIRO</strong>
+            <small>CONTINUOUS BECOMING</small>
+          </span>
         </div>
         <nav>
-          <a className="active">
+          <button className="active">
             <Home size={17} />
-            Command Center
-          </a>
-          <a>
+            <span className="nav-label">Command Center</span>
+          </button>
+          <button>
             <Feather size={17} />
-            Daily Log
-          </a>
-          <a>
+            <span className="nav-label">Daily Log</span>
+          </button>
+          <button>
             <Target size={17} />
-            Commitments
-          </a>
-          <a>
+            <span className="nav-label">Commitments</span>
+          </button>
+          <button>
             <BookOpen size={17} />
-            History
-          </a>
-          <a>
+            <span className="nav-label">History</span>
+          </button>
+          <button>
             <Sparkles size={17} />
-            Weekly Review
-          </a>
+            <span className="nav-label">Weekly Review</span>
+          </button>
         </nav>
-        <a className="settings">
+        <button className="settings">
           <Settings size={17} />
-          Settings
-        </a>
+          <span className="nav-label">Settings</span>
+        </button>
       </aside>
+
       <section className="content">
         <header>
-          <p className="eyebrow">SATURDAY · AUGUST 1</p>
-          <h1>Good evening, David.</h1>
-          <p className="lede">The day is ending. Take a moment to close it with intention.</p>
+          <div className="header-line">
+            <p className="eyebrow">{formattedDate().toUpperCase()}</p>
+            <span className={`save-state ${status}`}>
+              {status === 'saving' && <LoaderCircle size={12} />}
+              {status === 'loading'
+                ? 'Opening journal'
+                : status === 'error'
+                  ? 'Save failed'
+                  : status}
+            </span>
+          </div>
+          <h1>{greeting()}</h1>
+          <p className="lede">“{thoughtForToday()}”</p>
         </header>
+
         <div className="rule" />
         <section className="mission">
-          <p className="eyebrow">TODAY'S MISSION</p>
-          <h2>Lay a strong foundation.</h2>
-          <p>Keep the system calm, useful, and honest.</p>
+          <label className="eyebrow" htmlFor="intention">
+            TODAY'S INTENTION
+          </label>
+          <input
+            id="intention"
+            value={entry.intention}
+            onChange={(event) => setEntry({ ...entry, intention: event.target.value })}
+            placeholder="What matters most today?"
+            maxLength={240}
+          />
         </section>
+
         <div className="grid">
           <section>
             <div className="section-title">
               <p className="eyebrow">PRIORITIES</p>
-              <span>1 / 3</span>
+              <span>{completed} / 3</span>
             </div>
             <div className="checklist">
-              {priorities.map((item, i) => (
-                <div className="check" key={item}>
-                  {i === 0 ? (
-                    <span className="done">
-                      <Check size={13} />
-                    </span>
-                  ) : (
-                    <Circle size={17} />
-                  )}
-                  <span>{item}</span>
+              {entry.priorities.map((priority, index) => (
+                <div className="check" key={priority.id}>
+                  <button
+                    className={priority.completed ? 'done' : 'circle-button'}
+                    aria-label={`Mark priority ${index + 1} ${priority.completed ? 'incomplete' : 'complete'}`}
+                    onClick={() => updatePriority(index, { completed: !priority.completed })}
+                  >
+                    {priority.completed ? <Check size={13} /> : <Circle size={17} />}
+                  </button>
+                  <input
+                    value={priority.text}
+                    onChange={(event) => updatePriority(index, { text: event.target.value })}
+                    placeholder={`Priority ${index + 1}`}
+                    maxLength={140}
+                  />
                 </div>
               ))}
             </div>
@@ -73,21 +195,50 @@ export function App(): React.JSX.Element {
           <section className="pulse">
             <p className="eyebrow">TODAY'S PULSE</p>
             <div className="score">
-              <strong>64</strong>
+              <strong>{progress}</strong>
               <span>/ 100</span>
             </div>
             <div className="progress">
-              <i />
+              <i style={{ width: `${progress}%` }} />
             </div>
-            <p>Steady progress. Protect the final hour.</p>
+            <div className="meters">
+              <label>
+                Mood{' '}
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={entry.mood}
+                  onChange={(e) => setEntry({ ...entry, mood: Number(e.target.value) })}
+                />
+                <span>{entry.mood}</span>
+              </label>
+              <label>
+                Energy{' '}
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  value={entry.energy}
+                  onChange={(e) => setEntry({ ...entry, energy: Number(e.target.value) })}
+                />
+                <span>{entry.energy}</span>
+              </label>
+            </div>
           </section>
         </div>
+
         <section className="reflection">
-          <p className="eyebrow">EVENING REFLECTION</p>
-          <h3>What moved you forward today?</h3>
-          <button>
-            Begin reflection <span>→</span>
-          </button>
+          <div>
+            <p className="eyebrow">EVENING REFLECTION</p>
+            <h3>What moved you forward today?</h3>
+          </div>
+          <textarea
+            value={entry.reflection}
+            onChange={(e) => setEntry({ ...entry, reflection: e.target.value })}
+            placeholder="Write a few honest lines…"
+            maxLength={2000}
+          />
         </section>
       </section>
     </main>
