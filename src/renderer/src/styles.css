@@ -938,6 +938,73 @@ p {
   line-height: 1.55;
   white-space: pre-wrap;
 }
+.history-days {
+  border-bottom: 1px solid #292823;
+}
+.history-day {
+  border-bottom: 1px solid #292823;
+}
+.history-day-trigger {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto 24px;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  min-height: 82px;
+  border: 0;
+  border-radius: 0;
+  padding: 0 18px 0 0;
+  background: transparent;
+  color: #77746c;
+  text-align: left;
+  transition: background 150ms ease;
+}
+.history-day-trigger:hover,
+.history-day.expanded > .history-day-trigger {
+  background: #12110e;
+}
+.history-day.expanded > .history-day-trigger {
+  box-shadow: inset 2px 0 #b89550;
+}
+.history-day-trigger > svg {
+  color: #655f54;
+  transition:
+    color 150ms ease,
+    transform 180ms ease;
+}
+.history-day.expanded > .history-day-trigger > svg {
+  color: #c09a50;
+  transform: rotate(90deg);
+}
+.history-day-trigger .history-list-copy small {
+  color: #8c7446;
+  letter-spacing: 0.14em;
+}
+.history-day-summary {
+  display: flex;
+  gap: 6px;
+}
+.history-day-summary span {
+  border: 1px solid #2c2a25;
+  padding: 7px 9px;
+  color: #6d6961;
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+.history-day .history-detail {
+  padding: 34px 36px 42px 58px;
+  border-top: 1px solid #24221e;
+  background: #0d0d0c;
+}
+.history-record-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 34px;
+}
+.history-record-grid .history-section {
+  min-width: 0;
+}
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -1019,6 +1086,19 @@ p {
   }
   .history-detail {
     padding-left: 0;
+  }
+  .history-day-trigger {
+    grid-template-columns: 54px minmax(0, 1fr) 20px;
+  }
+  .history-day-summary {
+    display: none;
+  }
+  .history-day .history-detail {
+    padding-inline: 28px;
+  }
+  .history-record-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
   .commitment-grid {
     grid-template-columns: 1fr;
@@ -1136,5 +1216,13 @@ p {
   }
   .history-commitments {
     grid-template-columns: 1fr;
+  }
+  .history-day-trigger {
+    gap: 11px;
+    min-height: 76px;
+    padding-right: 8px;
+  }
+  .history-day .history-detail {
+    padding-inline: 18px;
   }
 }
