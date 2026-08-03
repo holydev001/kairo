@@ -61,6 +61,12 @@ app.whenReady().then(async () => {
   ipcMain.handle('journal:get', (_event, date: string) => journal.get(date))
   ipcMain.handle('journal:list', (_event, limit?: number) => journal.list(limit))
   ipcMain.handle('journal:save', (_event, entry: unknown) => journal.save(entry))
+  ipcMain.handle('weekly-review:get', (_event, weekStart: string) =>
+    journal.getWeeklyReview(weekStart)
+  )
+  ipcMain.handle('weekly-review:save', (_event, review: unknown) =>
+    journal.saveWeeklyReview(review)
+  )
   createWindow()
   app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow())
 })

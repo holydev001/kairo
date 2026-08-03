@@ -3,6 +3,11 @@ import { createRequire } from 'node:module'
 import type { Database } from 'sql.js'
 import initSqlJs from 'sql.js'
 import { createEmptyEntry, dailyEntrySchema, type DailyEntry } from '../shared/journal'
+import {
+  createEmptyWeeklyReview,
+  weeklyReviewSchema,
+  type WeeklyReview
+} from '../shared/weekly-review'
 
 const require = createRequire(import.meta.url)
 
@@ -23,6 +28,13 @@ export class JournalDatabase {
     database.run(`
       CREATE TABLE IF NOT EXISTS daily_entries (
         date TEXT PRIMARY KEY,
+        payload TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    `)
+    database.run(`
+      CREATE TABLE IF NOT EXISTS weekly_reviews (
+        week_start TEXT PRIMARY KEY,
         payload TEXT NOT NULL,
         updated_at TEXT NOT NULL
       )
@@ -79,6 +91,38 @@ export class JournalDatabase {
     )
     this.persist()
     return entry
+  }
+
+  getWeeklyReview(weekStart: string): WeeklyReview {
+    const statement = this.database.prepare(
+      'SELECT payload FROM weekly_reviews WHERE week_start = :weekStart LIMIT 1'
+    )
+    statement.bind({ ':weekStart': weekStart })
+    const review = statement.step()
+      ? weeklyReviewSchema.parse(JSON.parse(String(statement.getAsObject().payload)))
+      : createEmptyWeeklyReview(weekStart)
+    statement.free()
+    return review
+  }
+
+  saveWeeklyReview(value: unknown): WeeklyReview {
+    const review = weeklyReviewSchema.parse({
+      ...(typeof value === 'object' && value !== null ? value : {}),
+      updatedAt: new Date().toISOString()
+    })
+
+    this.database.run(
+      `INSERT INTO weekly_reviews (week_start, payload, updated_at)
+       VALUES (:weekStart, :payload, :updatedAt)
+       ON CONFLICT(week_start) DO UPDATE SET payload = excluded.payload, updated_at = excluded.updated_at`,
+      {
+        ':weekStart': review.weekStart,
+        ':payload': JSON.stringify(review),
+        ':updatedAt': review.updatedAt
+      }
+    )
+    this.persist()
+    return review
   }
 
   private persist(): void {
