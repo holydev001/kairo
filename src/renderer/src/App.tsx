@@ -18,6 +18,7 @@ import { createEmptyEntry, type DailyEntry } from '../../shared/journal'
 import { commitmentIconNames } from './commitment-icon-library'
 import { CommitmentIcon } from './commitment-icons'
 import { HistoryView } from './HistoryView'
+import { WeeklyReviewView } from './WeeklyReviewView'
 
 const today = new Date().toISOString().slice(0, 10)
 const kaizenThoughts = [
@@ -51,7 +52,7 @@ function thoughtForToday(): string {
 }
 
 export function App(): React.JSX.Element {
-  const [activeView, setActiveView] = useState<'command' | 'history'>('command')
+  const [activeView, setActiveView] = useState<'command' | 'history' | 'weekly'>('command')
   const [entry, setEntry] = useState<DailyEntry>(() => createEmptyEntry(today))
   const [status, setStatus] = useState<'loading' | 'saved' | 'saving' | 'error'>('loading')
   const [hydrated, setHydrated] = useState(false)
@@ -249,7 +250,10 @@ export function App(): React.JSX.Element {
             <BookOpen size={17} />
             <span className="nav-label">History</span>
           </button>
-          <button>
+          <button
+            className={activeView === 'weekly' ? 'active' : ''}
+            onClick={() => setActiveView('weekly')}
+          >
             <Sparkles size={17} />
             <span className="nav-label">Weekly Review</span>
           </button>
@@ -583,6 +587,7 @@ export function App(): React.JSX.Element {
           </section>
         </div>
         <HistoryView hidden={activeView !== 'history'} />
+        <WeeklyReviewView hidden={activeView !== 'weekly'} />
       </section>
     </main>
   )

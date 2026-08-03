@@ -1,4 +1,5 @@
 import type { DailyEntry } from '../../shared/journal'
+import type { WeeklyReview } from '../../shared/weekly-review'
 
 declare global {
   interface Window {
@@ -8,6 +9,10 @@ declare global {
         get(date: string): Promise<DailyEntry>
         list(limit?: number): Promise<DailyEntry[]>
         save(entry: DailyEntry): Promise<DailyEntry>
+      }
+      weeklyReview: {
+        get(weekStart: string): Promise<WeeklyReview>
+        save(review: WeeklyReview): Promise<WeeklyReview>
       }
     }
   }
