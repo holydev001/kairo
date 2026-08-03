@@ -685,9 +685,228 @@ p {
   line-height: 1.6;
 }
 .command-center[hidden],
+.daily-log-view[hidden],
 .history-view[hidden],
 .weekly-review-view[hidden] {
   display: none;
+}
+.daily-log-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  padding-bottom: 31px;
+  border-bottom: 1px solid #292823;
+}
+.daily-log-header h1 {
+  margin: 9px 0 8px;
+}
+.daily-log-header > div:first-child > p:last-child {
+  margin: 0;
+  color: #77746c;
+  font-size: 13px;
+}
+.daily-log-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.date-controls {
+  display: flex;
+  border: 1px solid #302e28;
+}
+.date-controls button {
+  display: grid;
+  place-items: center;
+  min-width: 38px;
+  height: 36px;
+  border: 0;
+  border-radius: 0;
+  background: #0e0e0d;
+  color: #817d74;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+}
+.date-controls button + button {
+  border-left: 1px solid #302e28;
+}
+.date-controls button:nth-child(2) {
+  padding-inline: 13px;
+}
+.date-controls button:hover:not(:disabled) {
+  color: #d0aa60;
+  background: #17150f;
+}
+.date-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+.daily-log-intention {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.55fr) minmax(0, 1.45fr);
+  gap: 34px;
+  padding: 35px 0 38px;
+  border-bottom: 1px solid #292823;
+}
+.daily-log-intention label {
+  display: grid;
+  align-content: start;
+  gap: 9px;
+}
+.daily-log-intention label span,
+.daily-log-writing label > span {
+  color: #9a7d47;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+}
+.daily-log-intention label small {
+  color: #68645d;
+  font-size: 10px;
+  line-height: 1.5;
+}
+.daily-log-intention textarea {
+  min-height: 95px;
+  resize: vertical;
+  border: 0;
+  border-bottom: 1px solid #302e28;
+  border-radius: 0;
+  padding: 0 0 13px;
+  outline: none;
+  background: transparent;
+  color: #ddd7cc;
+  font-family: 'Instrument Serif';
+  font-size: 28px;
+  line-height: 1.35;
+}
+.daily-log-intention textarea::placeholder,
+.daily-log-writing textarea::placeholder {
+  color: #4f4c46;
+}
+.daily-log-plan {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(240px, 0.75fr);
+  border-bottom: 1px solid #292823;
+}
+.daily-log-priorities {
+  padding: 34px 34px 37px 0;
+}
+.daily-log-pulse {
+  padding: 34px 0 37px 34px;
+  border-left: 1px solid #292823;
+}
+.daily-log-section-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+.daily-log-section-title h2,
+.daily-log-pulse h2,
+.daily-log-writing h2 {
+  margin: 8px 0 0;
+  font-family: 'Instrument Serif';
+  font-size: 24px;
+  font-weight: 400;
+}
+.daily-log-section-title > span {
+  color: #716b60;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+}
+.daily-log-priority-list {
+  margin-top: 22px;
+  border-top: 1px solid #292823;
+}
+.daily-log-priority-list > div {
+  display: grid;
+  grid-template-columns: 18px 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  border-bottom: 1px solid #24221e;
+}
+.daily-log-priority-list button {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  background: transparent;
+  color: #666159;
+}
+.daily-log-priority-list .complete button {
+  background: #b89550;
+  color: #0b0b0a;
+}
+.daily-log-priority-list > div > span {
+  color: #555149;
+  font-family: 'Instrument Serif';
+  font-size: 16px;
+}
+.daily-log-priority-list input {
+  width: 100%;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: #bcb6ac;
+}
+.daily-log-priority-list .complete input {
+  color: #716d65;
+  text-decoration: line-through;
+}
+.daily-log-pulse > label {
+  display: grid;
+  grid-template-columns: 45px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 11px;
+  margin-top: 25px;
+  color: #767169;
+  font-size: 10px;
+}
+.daily-log-pulse input {
+  width: 100%;
+  accent-color: #b89550;
+}
+.daily-log-pulse strong {
+  color: #d0aa60;
+  font-family: 'Instrument Serif';
+  font-size: 19px;
+  font-weight: 400;
+  text-align: right;
+}
+.daily-log-writing {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-bottom: 1px solid #292823;
+}
+.daily-log-writing label {
+  display: grid;
+  align-content: start;
+  min-height: 315px;
+  padding: 37px 34px 42px 0;
+}
+.daily-log-writing label + label {
+  border-left: 1px solid #292823;
+  padding-right: 0;
+  padding-left: 34px;
+}
+.daily-log-writing textarea {
+  width: 100%;
+  min-height: 185px;
+  margin-top: 21px;
+  resize: vertical;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  outline: none;
+  background: transparent;
+  color: #aaa49a;
+  font-family: 'Instrument Serif';
+  font-size: 18px;
+  line-height: 1.6;
 }
 .weekly-review-header {
   display: flex;
@@ -1315,6 +1534,17 @@ p {
   .week-days {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+  .daily-log-plan {
+    grid-template-columns: 1fr;
+  }
+  .daily-log-priorities {
+    padding-right: 0;
+  }
+  .daily-log-pulse {
+    border-top: 1px solid #292823;
+    border-left: 0;
+    padding-left: 0;
+  }
   .commitment-grid {
     grid-template-columns: 1fr;
   }
@@ -1455,5 +1685,30 @@ p {
   }
   .week-days {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .daily-log-header,
+  .daily-log-intention,
+  .daily-log-writing {
+    grid-template-columns: 1fr;
+  }
+  .daily-log-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .daily-log-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .daily-log-intention {
+    gap: 22px;
+  }
+  .daily-log-writing label {
+    min-height: 260px;
+    padding-right: 0;
+  }
+  .daily-log-writing label + label {
+    border-top: 1px solid #292823;
+    border-left: 0;
+    padding-left: 0;
   }
 }
