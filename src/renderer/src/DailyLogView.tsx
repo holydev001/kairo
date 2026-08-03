@@ -194,6 +194,20 @@ export function DailyLogView({ hidden }: { hidden: boolean }): React.JSX.Element
           />
         </label>
       </section>
+
+      <section className="daily-log-notes">
+        <div>
+          <span>06 · NOTES TO SELF</span>
+          <h2>Leave a thought here.</h2>
+          <p>Personal reminders, observations, or anything worth carrying with you.</p>
+        </div>
+        <textarea
+          value={entry.notes}
+          onChange={(event) => setEntry({ ...entry, notes: event.target.value })}
+          placeholder="A thought, reminder, question, or quiet note to yourself…"
+          maxLength={2000}
+        />
+      </section>
     </div>
   )
 }

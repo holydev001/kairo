@@ -908,6 +908,51 @@ p {
   font-size: 18px;
   line-height: 1.6;
 }
+.daily-log-notes {
+  display: grid;
+  grid-template-columns: minmax(210px, 0.62fr) minmax(0, 1.38fr);
+  gap: 34px;
+  padding: 35px 0 42px;
+  border-bottom: 1px solid #292823;
+}
+.daily-log-notes > div > span {
+  color: #9a7d47;
+  font-size: 9px;
+  font-weight: 650;
+  letter-spacing: 0.15em;
+}
+.daily-log-notes h2 {
+  margin: 9px 0 8px;
+  font-family: 'Instrument Serif';
+  font-size: 23px;
+  font-weight: 400;
+}
+.daily-log-notes p {
+  margin: 0;
+  max-width: 250px;
+  color: #66625b;
+  font-size: 10px;
+  line-height: 1.55;
+}
+.daily-log-notes textarea {
+  min-height: 105px;
+  resize: vertical;
+  border: 1px solid #292823;
+  border-radius: 0;
+  padding: 14px 16px;
+  outline: none;
+  background: #0e0e0d;
+  color: #aaa49a;
+  font-family: 'Instrument Serif';
+  font-size: 17px;
+  line-height: 1.55;
+}
+.daily-log-notes textarea:focus {
+  border-color: #725c32;
+}
+.daily-log-notes textarea::placeholder {
+  color: #4f4c46;
+}
 .weekly-review-header {
   display: flex;
   align-items: flex-end;
@@ -1710,5 +1755,9 @@ p {
     border-top: 1px solid #292823;
     border-left: 0;
     padding-left: 0;
+  }
+  .daily-log-notes {
+    grid-template-columns: 1fr;
+    gap: 22px;
   }
 }
