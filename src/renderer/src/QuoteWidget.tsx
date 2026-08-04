@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { GripHorizontal, Quote, X } from 'lucide-react'
+import { GripHorizontal, Quote, Settings, X } from 'lucide-react'
 import { dailyQuoteForDate } from '../../shared/quotes'
 import { createDefaultPreferences, type AppPreferences } from '../../shared/settings'
 
@@ -64,9 +64,17 @@ export function QuoteWidget(): React.JSX.Element {
       <div className="widget-handle">
         <span lang="ja">改</span>
         <GripHorizontal size={14} />
-        <button aria-label="Close widget" onClick={() => void window.kairo.widget.close('quote')}>
-          <X size={13} />
-        </button>
+        <div className="widget-handle-actions">
+          <button
+            aria-label="Open quote widget settings"
+            onClick={() => void window.kairo.widget.openSettings('quote')}
+          >
+            <Settings size={12} />
+          </button>
+          <button aria-label="Close widget" onClick={() => void window.kairo.widget.close('quote')}>
+            <X size={13} />
+          </button>
+        </div>
       </div>
 
       <div className="quote-widget-mark">

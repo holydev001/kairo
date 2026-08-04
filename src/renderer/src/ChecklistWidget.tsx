@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Circle, GripHorizontal, LoaderCircle, X } from 'lucide-react'
+import { Check, Circle, GripHorizontal, LoaderCircle, Settings, X } from 'lucide-react'
 import { createEmptyEntry, type DailyEntry } from '../../shared/journal'
 import { createDefaultPreferences, type AppPreferences } from '../../shared/settings'
 import { CommitmentIcon } from './commitment-icons'
@@ -112,12 +112,20 @@ export function ChecklistWidget(): React.JSX.Element {
       <div className="widget-handle">
         <span lang="ja">改</span>
         <GripHorizontal size={14} />
-        <button
-          aria-label="Close widget"
-          onClick={() => void window.kairo.widget.close('checklist')}
-        >
-          <X size={13} />
-        </button>
+        <div className="widget-handle-actions">
+          <button
+            aria-label="Open checklist widget settings"
+            onClick={() => void window.kairo.widget.openSettings('checklist')}
+          >
+            <Settings size={12} />
+          </button>
+          <button
+            aria-label="Close widget"
+            onClick={() => void window.kairo.widget.close('checklist')}
+          >
+            <X size={13} />
+          </button>
+        </div>
       </div>
 
       <header className="widget-header">

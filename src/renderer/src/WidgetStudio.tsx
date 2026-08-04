@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   BookOpen,
   Check,
@@ -51,17 +51,21 @@ type AppearancePatch = Partial<
 type WidgetStudioProps = {
   hidden: boolean
   preferences: AppPreferences
+  requestedWidget: WidgetKind
   onChange(preferences: AppPreferences): void
 }
 
 export function WidgetStudio({
   hidden,
   preferences,
+  requestedWidget,
   onChange
 }: WidgetStudioProps): React.JSX.Element {
   const [activeWidget, setActiveWidget] = useState<WidgetKind>('checklist')
   const widget = activeWidget === 'checklist' ? preferences.widget : preferences.quoteWidget
   const dimensions = activeWidget === 'checklist' ? checklistSizes : quoteSizes
+
+  useEffect(() => setActiveWidget(requestedWidget), [requestedWidget])
 
   const updateAppearance = (patch: AppearancePatch): void => {
     if (activeWidget === 'checklist') {
@@ -155,8 +159,8 @@ export function WidgetStudio({
             />
             <div className="widget-toggles">
               <WidgetToggle
-                label="Always on display"
-                detail="Restore this widget whenever Kairo starts."
+                label="Always on desktop"
+                detail="Start quietly with Windows and keep this widget present on the desktop."
                 checked={widget.alwaysOnDisplay}
                 onChange={(checked) => updateAppearance({ alwaysOnDisplay: checked })}
               />
