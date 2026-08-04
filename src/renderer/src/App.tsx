@@ -15,12 +15,18 @@ import {
   X
 } from 'lucide-react'
 import { createEmptyEntry, type DailyEntry } from '../../shared/journal'
+import {
+  createDefaultPreferences,
+  type AppPreferences,
+  type LaunchView
+} from '../../shared/settings'
 import { commitmentIconNames } from './commitment-icon-library'
 import { CommitmentIcon } from './commitment-icons'
 import { CommitmentsView } from './CommitmentsView'
 import { DailyLogView } from './DailyLogView'
 import { HistoryView } from './HistoryView'
 import { WeeklyReviewView } from './WeeklyReviewView'
+import { SettingsView } from './SettingsView'
 
 const today = new Date().toISOString().slice(0, 10)
 const kaizenThoughts = [
@@ -33,11 +39,10 @@ const kaizenThoughts = [
   'Become better by making the next action better.'
 ] as const
 
-function greeting(): string {
+function greeting(name: string): string {
   const hour = new Date().getHours()
-  if (hour < 12) return 'Good morning.'
-  if (hour < 18) return 'Good afternoon.'
-  return 'Good evening.'
+  const salutation = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+  return `${salutation}${name.trim() ? `, ${name.trim()}` : ''}.`
 }
 
 function formattedDate(): string {
@@ -54,9 +59,9 @@ function thoughtForToday(): string {
 }
 
 export function App(): React.JSX.Element {
-  const [activeView, setActiveView] = useState<
-    'command' | 'daily' | 'commitments' | 'history' | 'weekly'
-  >('command')
+  const [activeView, setActiveView] = useState<LaunchView | 'settings'>('command')
+  const [preferences, setPreferences] = useState<AppPreferences>(createDefaultPreferences)
+  const [preferencesHydrated, setPreferencesHydrated] = useState(false)
   const [entry, setEntry] = useState<DailyEntry>(() => createEmptyEntry(today))
   const [status, setStatus] = useState<'loading' | 'saved' | 'saving' | 'error'>('loading')
   const [hydrated, setHydrated] = useState(false)
@@ -84,6 +89,22 @@ export function App(): React.JSX.Element {
     const reflection = entry.reflection.trim() ? 15 : 0
     return intention + priorities + commitmentProgress + reflection
   }, [commitments.length, commitmentsCompleted, completed, entry.intention, entry.reflection])
+
+  useEffect(() => {
+    void window.kairo.settings
+      .get()
+      .then((value) => {
+        setPreferences(value)
+        setActiveView(value.launchView)
+        setPreferencesHydrated(true)
+      })
+      .catch(() => setPreferencesHydrated(true))
+  }, [])
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = preferences.theme
+    document.documentElement.style.colorScheme = preferences.theme === 'ivory' ? 'light' : 'dark'
+  }, [preferences.theme])
 
   useEffect(() => {
     void window.kairo.journal
@@ -268,7 +289,10 @@ export function App(): React.JSX.Element {
             <span className="nav-label">Weekly Review</span>
           </button>
         </nav>
-        <button className="settings">
+        <button
+          className={activeView === 'settings' ? 'settings active' : 'settings'}
+          onClick={() => setActiveView('settings')}
+        >
           <Settings size={17} />
           <span className="nav-label">Settings</span>
         </button>
@@ -288,7 +312,7 @@ export function App(): React.JSX.Element {
                     : status}
               </span>
             </div>
-            <h1>{greeting()}</h1>
+            <h1>{greeting(preferences.preferredName)}</h1>
             <p className="lede">“{thoughtForToday()}”</p>
           </header>
 
@@ -600,6 +624,12 @@ export function App(): React.JSX.Element {
         <CommitmentsView hidden={activeView !== 'commitments'} />
         <HistoryView hidden={activeView !== 'history'} />
         <WeeklyReviewView hidden={activeView !== 'weekly'} />
+        <SettingsView
+          hidden={activeView !== 'settings'}
+          preferences={preferences}
+          hydrated={preferencesHydrated}
+          onChange={setPreferences}
+        />
       </section>
     </main>
   )

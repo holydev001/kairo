@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { CommitmentCategory, DailyEntry } from '../shared/journal'
 import type { WeeklyReview } from '../shared/weekly-review'
+import type { AppInfo, AppPreferences, BackupResult } from '../shared/settings'
 
 contextBridge.exposeInMainWorld('kairo', {
   platform: process.platform,
@@ -19,5 +20,13 @@ contextBridge.exposeInMainWorld('kairo', {
     get: (): Promise<CommitmentCategory[]> => ipcRenderer.invoke('commitments:get'),
     save: (templates: CommitmentCategory[]): Promise<CommitmentCategory[]> =>
       ipcRenderer.invoke('commitments:save', templates)
+  },
+  settings: {
+    get: (): Promise<AppPreferences> => ipcRenderer.invoke('settings:get'),
+    save: (preferences: AppPreferences): Promise<AppPreferences> =>
+      ipcRenderer.invoke('settings:save', preferences),
+    info: (): Promise<AppInfo> => ipcRenderer.invoke('settings:info'),
+    createBackup: (): Promise<BackupResult> => ipcRenderer.invoke('settings:create-backup'),
+    showData: (): Promise<void> => ipcRenderer.invoke('settings:show-data')
   }
 })

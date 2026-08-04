@@ -1,5 +1,6 @@
 import { join } from 'node:path'
-import { app, BrowserWindow, ipcMain, nativeImage, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } from 'electron'
+import type { AppTheme, BackupResult } from '../shared/settings'
 import { JournalDatabase } from './database'
 
 let journal: JournalDatabase
@@ -18,16 +19,37 @@ const kairoIcon = nativeImage.createFromDataURL(
   `)}`
 )
 
+const windowThemes: Record<AppTheme, { background: string; symbols: string }> = {
+  obsidian: { background: '#0d0d0c', symbols: '#8e8b82' },
+  ivory: { background: '#e8e1d5', symbols: '#625b51' },
+  midnight: { background: '#09131d', symbols: '#8fa6b8' },
+  ember: { background: '#160e0b', symbols: '#b58b74' },
+  verdant: { background: '#0e1510', symbols: '#8fa192' }
+}
+
+function applyWindowTheme(theme: AppTheme): void {
+  const colors = windowThemes[theme]
+  for (const window of BrowserWindow.getAllWindows()) {
+    window.setBackgroundColor(colors.background)
+    window.setTitleBarOverlay({ color: colors.background, symbolColor: colors.symbols, height: 44 })
+  }
+}
+
 function createWindow(): void {
+  const windowTheme = windowThemes[journal.getPreferences().theme]
   const window = new BrowserWindow({
     width: 1440,
     height: 920,
     minWidth: 680,
     minHeight: 620,
-    backgroundColor: '#0b0b0a',
+    backgroundColor: windowTheme.background,
     icon: kairoIcon,
     titleBarStyle: 'hidden',
-    titleBarOverlay: { color: '#0b0b0a', symbolColor: '#8e8b82', height: 44 },
+    titleBarOverlay: {
+      color: windowTheme.background,
+      symbolColor: windowTheme.symbols,
+      height: 44
+    },
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -71,6 +93,35 @@ app.whenReady().then(async () => {
   ipcMain.handle('commitments:save', (_event, templates: unknown) =>
     journal.saveCommitmentTemplates(templates)
   )
+  ipcMain.handle('settings:get', () => journal.getPreferences())
+  ipcMain.handle('settings:save', (_event, preferences: unknown) => {
+    const saved = journal.savePreferences(preferences)
+    applyWindowTheme(saved.theme)
+    return saved
+  })
+  ipcMain.handle('settings:info', () => ({
+    version: app.getVersion(),
+    dataPath: journal.getPath()
+  }))
+  ipcMain.handle('settings:create-backup', async (): Promise<BackupResult> => {
+    const date = new Date().toISOString().slice(0, 10)
+    const result = await dialog.showSaveDialog({
+      title: 'Create a Kairo backup',
+      defaultPath: join(app.getPath('documents'), `kairo-backup-${date}.sqlite`),
+      buttonLabel: 'Create backup',
+      filters: [{ name: 'Kairo database', extensions: ['sqlite'] }]
+    })
+
+    if (result.canceled || !result.filePath) return { status: 'cancelled' }
+
+    journal.backup(result.filePath)
+    return {
+      status: 'saved',
+      path: result.filePath,
+      createdAt: new Date().toISOString()
+    }
+  })
+  ipcMain.handle('settings:show-data', () => shell.showItemInFolder(journal.getPath()))
   createWindow()
   app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow())
 })
