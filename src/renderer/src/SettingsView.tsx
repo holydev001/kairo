@@ -5,12 +5,15 @@ import {
   Download,
   FolderOpen,
   HardDrive,
+  Flame,
   LoaderCircle,
   Monitor,
+  MoonStar,
   ShieldCheck,
+  Sun,
   UserRound
 } from 'lucide-react'
-import type { AppInfo, AppPreferences, LaunchView } from '../../shared/settings'
+import type { AppInfo, AppPreferences, AppTheme, LaunchView } from '../../shared/settings'
 
 const launchViewLabels: Record<LaunchView, string> = {
   command: 'Command Center',
@@ -19,6 +22,43 @@ const launchViewLabels: Record<LaunchView, string> = {
   history: 'History',
   weekly: 'Weekly Review'
 }
+
+const themes: Array<{
+  id: AppTheme
+  name: string
+  description: string
+  colors: [string, string, string]
+  icon: typeof MoonStar
+}> = [
+  {
+    id: 'obsidian',
+    name: 'Obsidian',
+    description: 'Black, graphite, and quiet gold.',
+    colors: ['#0b0b0a', '#1b1914', '#b89550'],
+    icon: MoonStar
+  },
+  {
+    id: 'ivory',
+    name: 'Ivory',
+    description: 'Warm parchment with aged brass.',
+    colors: ['#f3efe6', '#d8cebd', '#9b6c20'],
+    icon: Sun
+  },
+  {
+    id: 'midnight',
+    name: 'Midnight',
+    description: 'Deep navy with cool silver-blue.',
+    colors: ['#081018', '#142432', '#78a6c8'],
+    icon: MoonStar
+  },
+  {
+    id: 'ember',
+    name: 'Ember',
+    description: 'Warm charcoal with burnished copper.',
+    colors: ['#120c09', '#281711', '#c77b4b'],
+    icon: Flame
+  }
+]
 
 type SettingsViewProps = {
   hidden: boolean
@@ -158,6 +198,42 @@ export function SettingsView({
             </div>
             <small>This page will open first the next time Kairo starts.</small>
           </div>
+        </div>
+      </section>
+
+      <section className="settings-section theme-section">
+        <div className="settings-section-heading">
+          <Sun size={18} />
+          <div>
+            <p className="eyebrow">APPEARANCE</p>
+            <h2>Choose the atmosphere.</h2>
+          </div>
+        </div>
+        <div className="theme-grid">
+          {themes.map((theme) => {
+            const ThemeIcon = theme.icon
+            const selected = preferences.theme === theme.id
+            return (
+              <button
+                className={selected ? 'theme-option selected' : 'theme-option'}
+                key={theme.id}
+                onClick={() => onChange({ ...preferences, theme: theme.id })}
+                aria-pressed={selected}
+              >
+                <span className="theme-option-topline">
+                  <ThemeIcon size={16} />
+                  {selected && <Check size={14} />}
+                </span>
+                <strong>{theme.name}</strong>
+                <small>{theme.description}</small>
+                <span className="theme-swatches" aria-hidden="true">
+                  {theme.colors.map((color) => (
+                    <i key={color} style={{ backgroundColor: color }} />
+                  ))}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </section>
 

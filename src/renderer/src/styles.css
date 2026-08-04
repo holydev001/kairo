@@ -1,8 +1,74 @@
 :root {
+  --theme-bg: #0b0b0a;
+  --theme-chrome: #0d0d0c;
+  --theme-sidebar: #0e0e0d;
+  --theme-surface: #10100f;
+  --theme-surface-raised: #191814;
+  --theme-line: #292823;
+  --theme-text: #eeeae0;
+  --theme-muted: #85827a;
+  --theme-faint: #5d5a53;
+  --theme-accent: #b89550;
+  --theme-accent-strong: #d0aa60;
+  --theme-accent-contrast: #0d0c0a;
+  --theme-glow: #17150f;
+  --theme-success: #7f8f72;
+  --theme-danger: #c06e61;
   font-family: 'Geist Variable', sans-serif;
   color: #eeeae0;
   background: #0b0b0a;
   font-synthesis: none;
+}
+[data-theme='ivory'] {
+  --theme-bg: #f3efe6;
+  --theme-chrome: #e8e1d5;
+  --theme-sidebar: #eee8dc;
+  --theme-surface: #faf7f0;
+  --theme-surface-raised: #e5dccd;
+  --theme-line: #d1c7b7;
+  --theme-text: #29251f;
+  --theme-muted: #736b60;
+  --theme-faint: #9a9082;
+  --theme-accent: #9b6c20;
+  --theme-accent-strong: #b17d28;
+  --theme-accent-contrast: #fffaf1;
+  --theme-glow: #e9decb;
+  --theme-success: #577050;
+  --theme-danger: #a54f43;
+}
+[data-theme='midnight'] {
+  --theme-bg: #081018;
+  --theme-chrome: #09131d;
+  --theme-sidebar: #0b1520;
+  --theme-surface: #0e1924;
+  --theme-surface-raised: #142432;
+  --theme-line: #203242;
+  --theme-text: #e5edf4;
+  --theme-muted: #8496a5;
+  --theme-faint: #536675;
+  --theme-accent: #78a6c8;
+  --theme-accent-strong: #98bdd7;
+  --theme-accent-contrast: #071019;
+  --theme-glow: #102536;
+  --theme-success: #79a08b;
+  --theme-danger: #c87972;
+}
+[data-theme='ember'] {
+  --theme-bg: #120c09;
+  --theme-chrome: #160e0b;
+  --theme-sidebar: #180f0c;
+  --theme-surface: #1d120e;
+  --theme-surface-raised: #281711;
+  --theme-line: #3a241b;
+  --theme-text: #f0e5dc;
+  --theme-muted: #a28a7c;
+  --theme-faint: #6f5549;
+  --theme-accent: #c77b4b;
+  --theme-accent-strong: #df9767;
+  --theme-accent-contrast: #160b07;
+  --theme-glow: #321b12;
+  --theme-success: #82966e;
+  --theme-danger: #d06f5b;
 }
 * {
   box-sizing: border-box;
@@ -1698,6 +1764,64 @@ p {
   font-size: 10px;
   line-height: 1.5;
 }
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid #292823;
+  border-left: 1px solid #292823;
+}
+.theme-option {
+  display: grid;
+  min-height: 166px;
+  border: 0;
+  border-right: 1px solid #292823;
+  border-bottom: 1px solid #292823;
+  border-radius: 0;
+  padding: 18px;
+  background: transparent;
+  color: #817d74;
+  text-align: left;
+  transition:
+    background 150ms ease,
+    color 150ms ease;
+}
+.theme-option:hover,
+.theme-option.selected {
+  background: #12110e;
+  color: #e6e0d5;
+}
+.theme-option.selected {
+  box-shadow: inset 2px 0 #b89550;
+}
+.theme-option-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #a18349;
+}
+.theme-option strong {
+  align-self: end;
+  margin-top: 20px;
+  font-family: 'Instrument Serif';
+  font-size: 21px;
+  font-weight: 400;
+}
+.theme-option small {
+  margin-top: 5px;
+  color: #69655e;
+  font-size: 9px;
+  line-height: 1.45;
+}
+.theme-swatches {
+  display: flex;
+  gap: 5px;
+  margin-top: 15px;
+}
+.theme-swatches i {
+  display: block;
+  width: 18px;
+  height: 3px;
+}
 .settings-select .select-trigger {
   min-height: 45px;
   border-color: #35332d;
@@ -1867,6 +1991,134 @@ p {
 .settings-footer span {
   font-size: 10px;
 }
+[data-theme] body {
+  color: var(--theme-text);
+  background: var(--theme-bg);
+}
+[data-theme] .shell {
+  color: var(--theme-text);
+  background:
+    radial-gradient(circle at 75% 0%, var(--theme-glow) 0, transparent 33%), var(--theme-bg);
+}
+[data-theme] .window-titlebar,
+[data-theme] .history-day .history-detail,
+[data-theme] .select-trigger,
+[data-theme] .select-menu,
+[data-theme] .icon-picker button,
+[data-theme] .daily-log-entry-field,
+[data-theme] .weekly-review-field {
+  background: var(--theme-chrome);
+}
+[data-theme] .sidebar,
+[data-theme] .commitment,
+[data-theme] .date-controls button,
+[data-theme] .week-controls button {
+  background: var(--theme-sidebar);
+}
+[data-theme] .commitment-form,
+[data-theme] .reflection textarea,
+[data-theme] .settings-select .select-trigger,
+[data-theme] .backup-panel {
+  background: var(--theme-surface);
+}
+[data-theme] .sidebar button.active,
+[data-theme] .select-menu button:hover,
+[data-theme] .select-menu button.selected,
+[data-theme] .history-list > button:hover,
+[data-theme] .history-list > button.selected,
+[data-theme] .history-day-trigger:hover,
+[data-theme] .history-day.expanded > .history-day-trigger,
+[data-theme] .history-commitments > div.complete,
+[data-theme] .privacy-note,
+[data-theme] .theme-option:hover,
+[data-theme] .theme-option.selected {
+  background: var(--theme-surface-raised);
+}
+[data-theme] .commitment.complete {
+  background:
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--theme-accent) 10%, transparent),
+      transparent 66%
+    ),
+    var(--theme-sidebar);
+}
+[data-theme] * {
+  border-color: var(--theme-line);
+}
+[data-theme] p,
+[data-theme] small,
+[data-theme] .sidebar button,
+[data-theme] input::placeholder,
+[data-theme] textarea::placeholder {
+  color: var(--theme-muted);
+}
+[data-theme] h1,
+[data-theme] h2,
+[data-theme] h3,
+[data-theme] strong,
+[data-theme] .sidebar button.active,
+[data-theme] .theme-option:hover,
+[data-theme] .theme-option.selected {
+  color: var(--theme-text);
+}
+[data-theme] input,
+[data-theme] textarea,
+[data-theme] .select-trigger,
+[data-theme] .select-menu button {
+  color: var(--theme-text);
+}
+[data-theme] .eyebrow,
+[data-theme] .brand-glyph,
+[data-theme] .window-titlebar-brand span,
+[data-theme] .theme-option-topline,
+[data-theme] .data-location i {
+  color: var(--theme-accent);
+}
+[data-theme] .brand-name small,
+[data-theme] .settings-footer,
+[data-theme] .data-location small {
+  color: var(--theme-faint);
+}
+[data-theme] .rule,
+[data-theme] .progress {
+  background: var(--theme-line);
+}
+[data-theme] .progress i,
+[data-theme] .commitment::after,
+[data-theme] .commitment-actions .primary-action,
+[data-theme] .form-confirm,
+[data-theme] .commitments-view-actions > button.primary,
+[data-theme] .settings-primary {
+  border-color: var(--theme-accent);
+  background: var(--theme-accent);
+  color: var(--theme-accent-contrast);
+}
+[data-theme] .settings-primary:hover:not(:disabled) {
+  background: var(--theme-accent-strong);
+}
+[data-theme] input[type='range'] {
+  accent-color: var(--theme-accent);
+}
+[data-theme] .select-trigger:focus-visible,
+[data-theme] .select-trigger.open,
+[data-theme] .settings-select .select-trigger.open,
+[data-theme] .settings-select .select-trigger:hover {
+  border-color: var(--theme-accent);
+}
+[data-theme] .sidebar button.active,
+[data-theme] .theme-option.selected {
+  border-left-color: var(--theme-accent);
+  box-shadow: inset 2px 0 var(--theme-accent);
+}
+[data-theme] .save-state.saved,
+[data-theme] .settings-message.success {
+  color: var(--theme-success);
+}
+[data-theme] .save-state.error,
+[data-theme] .settings-message.error {
+  color: var(--theme-danger);
+}
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -2013,6 +2265,9 @@ p {
   .settings-section {
     grid-template-columns: 1fr;
     gap: 30px;
+  }
+  .theme-grid {
+    grid-template-columns: 1fr;
   }
   .data-section {
     grid-template-areas:
