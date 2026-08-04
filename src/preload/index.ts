@@ -42,6 +42,7 @@ contextBridge.exposeInMainWorld('kairo', {
     }
   },
   widget: {
-    open: (): Promise<void> => ipcRenderer.invoke('widget:open')
+    open: (): Promise<void> => ipcRenderer.invoke('widget:open'),
+    close: (): Promise<void> => ipcRenderer.invoke('widget:close')
   }
 })

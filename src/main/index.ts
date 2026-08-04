@@ -1,6 +1,6 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } from 'electron'
-import type { AppTheme, BackupResult } from '../shared/settings'
+import type { AppTheme, BackupResult, WidgetPreferences } from '../shared/settings'
 import { JournalDatabase } from './database'
 
 let journal: JournalDatabase
@@ -28,11 +28,29 @@ const windowThemes: Record<AppTheme, { background: string; symbols: string }> = 
   verdant: { background: '#0e1510', symbols: '#8fa192' }
 }
 
+const widgetSizes: Record<WidgetPreferences['size'], [number, number]> = {
+  compact: [300, 330],
+  standard: [370, 480],
+  expanded: [440, 620]
+}
+
 function applyWindowTheme(theme: AppTheme): void {
   const colors = windowThemes[theme]
   for (const window of BrowserWindow.getAllWindows()) {
+    if (window === widgetWindow) continue
     window.setBackgroundColor(colors.background)
     window.setTitleBarOverlay({ color: colors.background, symbolColor: colors.symbols, height: 44 })
+  }
+}
+
+function applyWidgetPreferences(preferences: WidgetPreferences, animate = true): void {
+  if (!widgetWindow || widgetWindow.isDestroyed()) return
+  const [width, height] = widgetSizes[preferences.size]
+  widgetWindow.setAlwaysOnTop(preferences.alwaysOnTop, 'floating')
+  widgetWindow.setOpacity(preferences.opacity)
+  widgetWindow.setSize(width, height, animate)
+  if (process.platform === 'win32') {
+    widgetWindow.setBackgroundMaterial(preferences.blur ? 'acrylic' : 'none')
   }
 }
 
@@ -94,24 +112,23 @@ function createWidgetWindow(): void {
     return
   }
 
-  const windowTheme = windowThemes[journal.getPreferences().theme]
+  const preferences = journal.getPreferences().widget
+  const [width, height] = widgetSizes[preferences.size]
   widgetWindow = new BrowserWindow({
-    width: 390,
-    height: 570,
-    minWidth: 320,
-    minHeight: 420,
-    maxWidth: 520,
-    alwaysOnTop: true,
+    width,
+    height,
+    minWidth: 270,
+    minHeight: 280,
+    maxWidth: 560,
+    maxHeight: 720,
+    frame: false,
+    transparent: true,
+    skipTaskbar: true,
+    alwaysOnTop: preferences.alwaysOnTop,
     maximizable: false,
     show: false,
-    backgroundColor: windowTheme.background,
+    backgroundColor: '#00000000',
     icon: kairoIcon,
-    titleBarStyle: 'hidden',
-    titleBarOverlay: {
-      color: windowTheme.background,
-      symbolColor: windowTheme.symbols,
-      height: 44
-    },
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -120,7 +137,7 @@ function createWidgetWindow(): void {
     }
   })
 
-  widgetWindow.setAlwaysOnTop(true, 'floating')
+  applyWidgetPreferences(preferences, false)
   widgetWindow.once('ready-to-show', () => widgetWindow?.show())
   widgetWindow.on('closed', () => {
     widgetWindow = null
@@ -158,6 +175,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('settings:save', (event, preferences: unknown) => {
     const saved = journal.savePreferences(preferences)
     applyWindowTheme(saved.theme)
+    applyWidgetPreferences(saved.widget)
     broadcast('settings:updated', saved, event.sender.id)
     return saved
   })
@@ -185,6 +203,7 @@ app.whenReady().then(async () => {
   })
   ipcMain.handle('settings:show-data', () => shell.showItemInFolder(journal.getPath()))
   ipcMain.handle('widget:open', () => createWidgetWindow())
+  ipcMain.handle('widget:close', () => widgetWindow?.close())
   createWindow()
   app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow())
 })

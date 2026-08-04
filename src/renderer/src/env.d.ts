@@ -30,6 +30,7 @@ declare global {
       }
       widget: {
         open(): Promise<void>
+        close(): Promise<void>
       }
     }
   }
