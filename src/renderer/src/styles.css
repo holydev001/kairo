@@ -70,6 +70,23 @@
   --theme-success: #82966e;
   --theme-danger: #d06f5b;
 }
+[data-theme='verdant'] {
+  --theme-bg: #0c120e;
+  --theme-chrome: #0e1510;
+  --theme-sidebar: #101812;
+  --theme-surface: #131d16;
+  --theme-surface-raised: #19261e;
+  --theme-line: #28382d;
+  --theme-text: #e7eee7;
+  --theme-muted: #87978a;
+  --theme-faint: #56675a;
+  --theme-accent: #7f9f78;
+  --theme-accent-strong: #9ab394;
+  --theme-accent-contrast: #0b120d;
+  --theme-glow: #17251b;
+  --theme-success: #8ba784;
+  --theme-danger: #c87868;
+}
 * {
   box-sizing: border-box;
 }

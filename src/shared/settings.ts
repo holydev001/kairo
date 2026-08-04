@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const launchViewSchema = z.enum(['command', 'daily', 'commitments', 'history', 'weekly'])
-export const themeSchema = z.enum(['obsidian', 'ivory', 'midnight', 'ember'])
+export const themeSchema = z.enum(['obsidian', 'ivory', 'midnight', 'ember', 'verdant'])
 
 export const appPreferencesSchema = z.object({
   preferredName: z.string().trim().max(60),

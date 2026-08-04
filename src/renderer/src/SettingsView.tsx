@@ -10,6 +10,7 @@ import {
   Monitor,
   MoonStar,
   ShieldCheck,
+  Sprout,
   Sun,
   UserRound
 } from 'lucide-react'
@@ -57,6 +58,13 @@ const themes: Array<{
     description: 'Warm charcoal with burnished copper.',
     colors: ['#120c09', '#281711', '#c77b4b'],
     icon: Flame
+  },
+  {
+    id: 'verdant',
+    name: 'Verdant',
+    description: 'Forest shadow with quiet sage.',
+    colors: ['#0c120e', '#19261e', '#7f9f78'],
+    icon: Sprout
   }
 ]
 
