@@ -5,10 +5,20 @@ import '@fontsource/instrument-serif'
 import './styles.css'
 import { App } from './App'
 import { ChecklistWidget } from './ChecklistWidget'
+import { QuoteWidget } from './QuoteWidget'
 
-const isWidget = new URLSearchParams(window.location.search).get('view') === 'widget'
-if (isWidget) document.documentElement.dataset.window = 'widget'
+const widgetKind = new URLSearchParams(window.location.search).get('widget')
+if (widgetKind) document.documentElement.dataset.window = 'widget'
+
+const view =
+  widgetKind === 'checklist' ? (
+    <ChecklistWidget />
+  ) : widgetKind === 'quote' ? (
+    <QuoteWidget />
+  ) : (
+    <App />
+  )
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>{isWidget ? <ChecklistWidget /> : <App />}</React.StrictMode>
+  <React.StrictMode>{view}</React.StrictMode>
 )

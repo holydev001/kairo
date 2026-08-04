@@ -1,15 +1,52 @@
-import { Check, Eye, Layers3, MonitorUp, PanelsTopLeft, Sparkles } from 'lucide-react'
-import type { AppPreferences, WidgetPreferences } from '../../shared/settings'
+import { useState } from 'react'
+import {
+  BookOpen,
+  Check,
+  Eye,
+  Layers3,
+  MonitorUp,
+  PanelsTopLeft,
+  Quote,
+  Sparkles
+} from 'lucide-react'
+import type {
+  AppPreferences,
+  QuoteWidgetPreferences,
+  WidgetKind,
+  WidgetPreferences
+} from '../../shared/settings'
 
-const sizes: Array<{
-  id: WidgetPreferences['size']
-  name: string
-  dimensions: string
-}> = [
-  { id: 'compact', name: 'Compact', dimensions: '300 × 330' },
-  { id: 'standard', name: 'Standard', dimensions: '370 × 480' },
-  { id: 'expanded', name: 'Expanded', dimensions: '440 × 620' }
+const checklistSizes: Record<WidgetPreferences['size'], string> = {
+  compact: '290 × 310',
+  standard: '370 × 480',
+  expanded: '440 × 620'
+}
+
+const quoteSizes: Record<WidgetPreferences['size'], string> = {
+  compact: '310 × 230',
+  standard: '380 × 300',
+  expanded: '440 × 380'
+}
+
+const sizes: Array<{ id: WidgetPreferences['size']; name: string }> = [
+  { id: 'compact', name: 'Compact' },
+  { id: 'standard', name: 'Standard' },
+  { id: 'expanded', name: 'Expanded' }
 ]
+
+type AppearancePatch = Partial<
+  Pick<
+    WidgetPreferences,
+    | 'size'
+    | 'alwaysOnDisplay'
+    | 'alwaysOnTop'
+    | 'translucent'
+    | 'blur'
+    | 'blurIntensity'
+    | 'opacity'
+    | 'backgroundOpacity'
+  >
+>
 
 type WidgetStudioProps = {
   hidden: boolean
@@ -22,51 +59,87 @@ export function WidgetStudio({
   preferences,
   onChange
 }: WidgetStudioProps): React.JSX.Element {
-  const widget = preferences.widget
-  const update = (patch: Partial<WidgetPreferences>): void => {
-    onChange({ ...preferences, widget: { ...widget, ...patch } })
+  const [activeWidget, setActiveWidget] = useState<WidgetKind>('checklist')
+  const widget = activeWidget === 'checklist' ? preferences.widget : preferences.quoteWidget
+  const dimensions = activeWidget === 'checklist' ? checklistSizes : quoteSizes
+
+  const updateAppearance = (patch: AppearancePatch): void => {
+    if (activeWidget === 'checklist') {
+      onChange({ ...preferences, widget: { ...preferences.widget, ...patch } })
+    } else {
+      onChange({ ...preferences, quoteWidget: { ...preferences.quoteWidget, ...patch } })
+    }
+  }
+
+  const updateChecklist = (patch: Partial<WidgetPreferences>): void => {
+    onChange({ ...preferences, widget: { ...preferences.widget, ...patch } })
+  }
+
+  const updateQuote = (patch: Partial<QuoteWidgetPreferences>): void => {
+    onChange({ ...preferences, quoteWidget: { ...preferences.quoteWidget, ...patch } })
   }
 
   const launchWidget = async (): Promise<void> => {
     await window.kairo.settings.save(preferences)
-    await window.kairo.widget.open('checklist')
+    await window.kairo.widget.open(activeWidget)
   }
 
   return (
     <div className="widget-studio" hidden={hidden}>
       <header className="widget-studio-header">
         <div>
-          <p className="eyebrow">DESKTOP WIDGET</p>
-          <h1>Keep the day within sight.</h1>
-          <p>Shape a quiet checklist that belongs on your desktop—not another app window.</p>
+          <p className="eyebrow">DESKTOP WIDGETS</p>
+          <h1>Keep what matters within sight.</h1>
+          <p>Shape quiet desktop surfaces that feel like Kairo—not another open app window.</p>
         </div>
         <button className="settings-primary" onClick={() => void launchWidget()}>
           <MonitorUp size={15} />
-          Launch widget
+          Launch {activeWidget === 'checklist' ? 'checklist' : 'quote'}
         </button>
       </header>
+
+      <nav className="widget-kind-picker" aria-label="Choose a widget">
+        <button
+          className={activeWidget === 'checklist' ? 'active' : ''}
+          onClick={() => setActiveWidget('checklist')}
+        >
+          <PanelsTopLeft size={16} />
+          <span>
+            <strong>Daily Checklist</strong>
+            <small>Commitments and progress</small>
+          </span>
+        </button>
+        <button
+          className={activeWidget === 'quote' ? 'active' : ''}
+          onClick={() => setActiveWidget('quote')}
+        >
+          <Quote size={16} />
+          <span>
+            <strong>Daily Quote</strong>
+            <small>Kaizen, personal words or scripture</small>
+          </span>
+        </button>
+      </nav>
 
       <div className="widget-studio-layout">
         <div className="widget-config">
           <section>
-            <div className="widget-config-heading">
-              <PanelsTopLeft size={17} />
-              <div>
-                <p className="eyebrow">SIZE</p>
-                <h2>Choose its footprint.</h2>
-              </div>
-            </div>
+            <ConfigHeading
+              icon={<PanelsTopLeft size={17} />}
+              eyebrow="SIZE"
+              title="Choose its footprint."
+            />
             <div className="widget-size-options">
               {sizes.map((size) => (
                 <button
                   className={widget.size === size.id ? 'selected' : ''}
                   key={size.id}
-                  onClick={() => update({ size: size.id })}
+                  onClick={() => updateAppearance({ size: size.id })}
                 >
                   <i className={`size-shape ${size.id}`} />
                   <span>
                     <strong>{size.name}</strong>
-                    <small>{size.dimensions}</small>
+                    <small>{dimensions[size.id]}</small>
                   </span>
                   {widget.size === size.id && <Check size={13} />}
                 </button>
@@ -75,106 +148,94 @@ export function WidgetStudio({
           </section>
 
           <section>
-            <div className="widget-config-heading">
-              <Layers3 size={17} />
-              <div>
-                <p className="eyebrow">PRESENCE</p>
-                <h2>Decide how it sits.</h2>
-              </div>
-            </div>
+            <ConfigHeading
+              icon={<Layers3 size={17} />}
+              eyebrow="PRESENCE"
+              title="Decide how it sits."
+            />
             <div className="widget-toggles">
               <WidgetToggle
                 label="Always on display"
                 detail="Restore this widget whenever Kairo starts."
                 checked={widget.alwaysOnDisplay}
-                onChange={(checked) => update({ alwaysOnDisplay: checked })}
+                onChange={(checked) => updateAppearance({ alwaysOnDisplay: checked })}
               />
               <WidgetToggle
                 label="Display over all windows"
                 detail="Keep it floating above your other applications."
                 checked={widget.alwaysOnTop}
-                onChange={(checked) => update({ alwaysOnTop: checked })}
+                onChange={(checked) => updateAppearance({ alwaysOnTop: checked })}
               />
               <WidgetToggle
                 label="Translucent surface"
-                detail="Let a hint of the desktop pass through."
+                detail="Let a controlled amount of the desktop pass through."
                 checked={widget.translucent}
-                onChange={(checked) => update({ translucent: checked })}
+                onChange={(checked) => updateAppearance({ translucent: checked })}
               />
               <WidgetToggle
                 label="Backdrop blur"
                 detail="Soften whatever sits behind the widget."
                 checked={widget.blur}
-                onChange={(checked) => update({ blur: checked })}
+                onChange={(checked) => updateAppearance({ blur: checked })}
               />
             </div>
-            <label className="widget-opacity">
-              <span>
-                <strong>Window opacity</strong>
-                <small>{Math.round(widget.opacity * 100)}%</small>
-              </span>
-              <input
-                type="range"
-                min="65"
-                max="100"
-                value={Math.round(widget.opacity * 100)}
-                onChange={(event) => update({ opacity: Number(event.target.value) / 100 })}
-              />
-            </label>
-            <label className="widget-opacity">
-              <span>
-                <strong>Background opacity</strong>
-                <small>{Math.round(widget.backgroundOpacity * 100)}%</small>
-              </span>
-              <p>Adjust the surface only. Text, icons and controls remain fully clear.</p>
-              <input
-                type="range"
-                min="20"
-                max="100"
-                value={Math.round(widget.backgroundOpacity * 100)}
-                onChange={(event) =>
-                  update({ backgroundOpacity: Number(event.target.value) / 100 })
-                }
-              />
-            </label>
-            <label className={`widget-opacity ${widget.blur ? '' : 'disabled'}`}>
-              <span>
-                <strong>Backdrop blur intensity</strong>
-                <small>{widget.blurIntensity}px</small>
-              </span>
-              <input
-                type="range"
-                min="0"
-                max="40"
-                value={widget.blurIntensity}
-                disabled={!widget.blur}
-                onChange={(event) => update({ blurIntensity: Number(event.target.value) })}
-              />
-            </label>
+            <RangeControl
+              label="Window opacity"
+              detail="Fades the complete widget, including its content."
+              value={Math.round(widget.opacity * 100)}
+              min={65}
+              max={100}
+              suffix="%"
+              onChange={(value) => updateAppearance({ opacity: value / 100 })}
+            />
+            <RangeControl
+              label="Background opacity"
+              detail="Adjusts only the surface. Content remains completely clear."
+              value={Math.round(widget.backgroundOpacity * 100)}
+              min={20}
+              max={100}
+              suffix="%"
+              disabled={!widget.translucent}
+              onChange={(value) => updateAppearance({ backgroundOpacity: value / 100 })}
+            />
+            <RangeControl
+              label="Backdrop blur intensity"
+              detail="Control how strongly the desktop behind it is softened."
+              value={widget.blurIntensity}
+              min={0}
+              max={40}
+              suffix="px"
+              disabled={!widget.blur}
+              onChange={(value) => updateAppearance({ blurIntensity: value })}
+            />
           </section>
 
           <section>
-            <div className="widget-config-heading">
-              <Eye size={17} />
-              <div>
-                <p className="eyebrow">CONTENT</p>
-                <h2>Keep only what helps.</h2>
+            <ConfigHeading
+              icon={activeWidget === 'checklist' ? <Eye size={17} /> : <BookOpen size={17} />}
+              eyebrow="CONTENT"
+              title={
+                activeWidget === 'checklist' ? 'Keep only what helps.' : 'Choose what it carries.'
+              }
+            />
+            {activeWidget === 'checklist' ? (
+              <div className="widget-toggles">
+                <WidgetToggle
+                  label="Show today’s intention"
+                  detail="Keep the purpose of the day in view."
+                  checked={preferences.widget.showIntention}
+                  onChange={(checked) => updateChecklist({ showIntention: checked })}
+                />
+                <WidgetToggle
+                  label="Show commitment details"
+                  detail="Include targets and supporting notes."
+                  checked={preferences.widget.showDetails}
+                  onChange={(checked) => updateChecklist({ showDetails: checked })}
+                />
               </div>
-            </div>
-            <div className="widget-toggles">
-              <WidgetToggle
-                label="Show today’s intention"
-                detail="Keep the purpose of the day in view."
-                checked={widget.showIntention}
-                onChange={(checked) => update({ showIntention: checked })}
-              />
-              <WidgetToggle
-                label="Show commitment details"
-                detail="Include targets and supporting notes."
-                checked={widget.showDetails}
-                onChange={(checked) => update({ showDetails: checked })}
-              />
-            </div>
+            ) : (
+              <QuoteControls quote={preferences.quoteWidget} update={updateQuote} />
+            )}
           </section>
         </div>
 
@@ -184,7 +245,7 @@ export function WidgetStudio({
             LIVE CHARACTER
           </div>
           <div
-            className={`widget-preview-card ${widget.translucent ? 'translucent' : ''}`}
+            className={`widget-preview-card ${widget.translucent ? 'translucent' : ''} ${activeWidget === 'quote' ? 'quote-preview-card' : ''}`}
             style={
               {
                 '--preview-background-opacity': `${Math.round(widget.backgroundOpacity * 100)}%`,
@@ -193,22 +254,168 @@ export function WidgetStudio({
               } as React.CSSProperties
             }
           >
-            <p className="eyebrow">TODAY · 2 OF 3</p>
-            <h3>Quiet progress.</h3>
-            <div>
-              <Check size={10} /> Workout
-            </div>
-            <div>
-              <span /> Reading
-            </div>
-            <div>
-              <Check size={10} /> Scripture
-            </div>
+            {activeWidget === 'checklist' ? (
+              <>
+                <p className="eyebrow">TODAY · 2 OF 3</p>
+                <h3>Quiet progress.</h3>
+                <div>
+                  <Check size={10} /> Workout
+                </div>
+                <div>
+                  <span /> Reading
+                </div>
+                <div>
+                  <Check size={10} /> Scripture
+                </div>
+              </>
+            ) : (
+              <QuotePreview quote={preferences.quoteWidget} />
+            )}
           </div>
           <p>The widget inherits your active Kairo theme automatically.</p>
         </aside>
       </div>
     </div>
+  )
+}
+
+function ConfigHeading({
+  icon,
+  eyebrow,
+  title
+}: {
+  icon: React.ReactNode
+  eyebrow: string
+  title: string
+}): React.JSX.Element {
+  return (
+    <div className="widget-config-heading">
+      {icon}
+      <div>
+        <p className="eyebrow">{eyebrow}</p>
+        <h2>{title}</h2>
+      </div>
+    </div>
+  )
+}
+
+function QuoteControls({
+  quote,
+  update
+}: {
+  quote: QuoteWidgetPreferences
+  update(patch: Partial<QuoteWidgetPreferences>): void
+}): React.JSX.Element {
+  return (
+    <div className="quote-controls">
+      <div className="quote-mode-options">
+        {(
+          [
+            ['daily', 'Daily quote'],
+            ['custom', 'Custom words'],
+            ['scripture', 'Bible verse']
+          ] as const
+        ).map(([mode, label]) => (
+          <button
+            className={quote.mode === mode ? 'selected' : ''}
+            key={mode}
+            onClick={() => update({ mode })}
+          >
+            {label}
+            {quote.mode === mode && <Check size={12} />}
+          </button>
+        ))}
+      </div>
+      {quote.mode !== 'daily' && (
+        <>
+          <label className="widget-content-field">
+            <span>{quote.mode === 'scripture' ? 'VERSE' : 'CONTENT'}</span>
+            <textarea
+              rows={4}
+              maxLength={500}
+              placeholder={
+                quote.mode === 'scripture'
+                  ? 'Enter the verse text…'
+                  : 'Write something worth seeing each day…'
+              }
+              value={quote.customContent}
+              onChange={(event) => update({ customContent: event.target.value })}
+            />
+          </label>
+          <label className="widget-content-field">
+            <span>{quote.mode === 'scripture' ? 'REFERENCE' : 'ATTRIBUTION · OPTIONAL'}</span>
+            <input
+              maxLength={120}
+              placeholder={quote.mode === 'scripture' ? 'Proverbs 3:5–6' : 'A name or source'}
+              value={quote.attribution}
+              onChange={(event) => update({ attribution: event.target.value })}
+            />
+          </label>
+        </>
+      )}
+    </div>
+  )
+}
+
+function QuotePreview({ quote }: { quote: QuoteWidgetPreferences }): React.JSX.Element {
+  const content =
+    quote.mode === 'daily'
+      ? 'Small steps, repeated with intention, become transformation.'
+      : quote.customContent.trim() || 'Your chosen words will live here.'
+  const label =
+    quote.mode === 'scripture'
+      ? 'SCRIPTURE'
+      : quote.mode === 'custom'
+        ? 'PERSONAL WORD'
+        : 'DAILY KAIZEN'
+  return (
+    <>
+      <Quote size={16} />
+      <p className="eyebrow">{label}</p>
+      <blockquote>{content}</blockquote>
+      {quote.attribution.trim() && <cite>{quote.attribution}</cite>}
+    </>
+  )
+}
+
+function RangeControl({
+  label,
+  detail,
+  value,
+  min,
+  max,
+  suffix,
+  disabled = false,
+  onChange
+}: {
+  label: string
+  detail: string
+  value: number
+  min: number
+  max: number
+  suffix: string
+  disabled?: boolean
+  onChange(value: number): void
+}): React.JSX.Element {
+  return (
+    <label className={`widget-opacity ${disabled ? 'disabled' : ''}`}>
+      <span>
+        <strong>{label}</strong>
+        <small>
+          {value}
+          {suffix}
+        </small>
+      </span>
+      <p>{detail}</p>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        disabled={disabled}
+        onChange={(event) => onChange(Number(event.target.value))}
+      />
+    </label>
   )
 }
 
