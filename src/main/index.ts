@@ -8,6 +8,7 @@ import type {
   WidgetPreferences
 } from '../shared/settings'
 import { JournalDatabase } from './database'
+import { attachWindowToDesktop, detachWindowFromDesktop } from './windows-desktop'
 
 let journal: JournalDatabase
 let mainWindow: BrowserWindow | null = null
@@ -42,12 +43,12 @@ const windowThemes: Record<AppTheme, { background: string; symbols: string }> = 
 
 const widgetSizes: Record<WidgetKind, Record<WidgetPreferences['size'], [number, number]>> = {
   checklist: {
-    compact: [290, 310],
+    compact: [270, 280],
     standard: [370, 480],
     expanded: [440, 620]
   },
   quote: {
-    compact: [310, 230],
+    compact: [280, 200],
     standard: [380, 300],
     expanded: [440, 380]
   }
@@ -115,6 +116,11 @@ function applyWidgetPreferences(
   widgetWindow.setSize(width, height, animate)
   if (process.platform === 'win32') {
     widgetWindow.setBackgroundMaterial(preferences.blur ? 'acrylic' : 'none')
+    if (preferences.alwaysOnDisplay && !preferences.alwaysOnTop) {
+      attachWindowToDesktop(widgetWindow.getNativeWindowHandle())
+    } else {
+      detachWindowFromDesktop(widgetWindow.getNativeWindowHandle())
+    }
   }
   syncDesktopPresence(kind, preferences)
 }
@@ -176,19 +182,6 @@ function createWindow(): BrowserWindow {
   return window
 }
 
-function openWidgetSettings(kind: WidgetKind): void {
-  const window = createWindow()
-  if (window.isMinimized()) window.restore()
-  window.show()
-  window.focus()
-  const sendRequest = (): void => window.webContents.send('widget:settings-requested', kind)
-  if (window.webContents.isLoading()) {
-    window.webContents.once('did-finish-load', sendRequest)
-  } else {
-    sendRequest()
-  }
-}
-
 function createWidgetWindow(kind: WidgetKind): void {
   let widgetWindow = widgetWindows[kind]
   if (widgetWindow && !widgetWindow.isDestroyed()) {
@@ -203,11 +196,12 @@ function createWidgetWindow(kind: WidgetKind): void {
   widgetWindow = new BrowserWindow({
     width,
     height,
-    minWidth: kind === 'checklist' ? 260 : 280,
-    minHeight: kind === 'checklist' ? 260 : 200,
+    minWidth: kind === 'checklist' ? 270 : 280,
+    minHeight: kind === 'checklist' ? 280 : 200,
     maxWidth: 560,
     maxHeight: 720,
     frame: false,
+    thickFrame: false,
     transparent: process.platform !== 'win32',
     skipTaskbar: true,
     alwaysOnTop: preferences.alwaysOnTop,
@@ -301,7 +295,6 @@ app.whenReady().then(async () => {
   ipcMain.handle('settings:show-data', () => shell.showItemInFolder(journal.getPath()))
   ipcMain.handle('widget:open', (_event, kind: WidgetKind) => createWidgetWindow(kind))
   ipcMain.handle('widget:close', (_event, kind: WidgetKind) => widgetWindows[kind]?.close())
-  ipcMain.handle('widget:open-settings', (_event, kind: WidgetKind) => openWidgetSettings(kind))
   if (!backgroundLaunch) createWindow()
   const preferences = journal.getPreferences()
   syncLoginLaunch()
