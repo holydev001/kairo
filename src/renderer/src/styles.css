@@ -2320,6 +2320,183 @@ p {
   background: var(--theme-accent-strong);
   box-shadow: 0 0 10px color-mix(in srgb, var(--theme-accent) 70%, transparent);
 }
+.widget-shell {
+  min-height: 100vh;
+  padding: 76px 24px 20px;
+  overflow: hidden;
+  color: var(--theme-text);
+  background:
+    radial-gradient(circle at 80% 0%, var(--theme-glow), transparent 38%), var(--theme-bg);
+}
+.widget-titlebar {
+  position: fixed;
+  z-index: 10;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  border-bottom: 1px solid var(--theme-line);
+  padding: 0 140px 0 15px;
+  background: var(--theme-chrome);
+  -webkit-app-region: drag;
+  user-select: none;
+}
+.widget-titlebar span {
+  color: var(--theme-accent);
+  font-family: 'Yu Mincho', 'MS Mincho', serif;
+  font-size: 14px;
+}
+.widget-titlebar strong {
+  color: var(--theme-text);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+}
+.widget-titlebar i {
+  color: var(--theme-faint);
+  font-size: 7px;
+  font-style: normal;
+  letter-spacing: 0.15em;
+}
+.widget-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--theme-line);
+}
+.widget-header h1 {
+  margin: 7px 0 0;
+  font-size: 30px;
+}
+.widget-progress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px 16px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--theme-line);
+}
+.widget-progress > div:first-child {
+  display: flex;
+  gap: 14px;
+  grid-column: 1 / -1;
+  color: var(--theme-muted);
+  font-size: 8px;
+  letter-spacing: 0.13em;
+}
+.widget-progress .progress {
+  margin-bottom: 4px;
+}
+.widget-progress > strong {
+  color: var(--theme-accent-strong);
+  font-family: 'Instrument Serif';
+  font-size: 25px;
+  font-weight: 400;
+}
+.widget-intention {
+  padding: 20px 0 18px;
+  border-bottom: 1px solid var(--theme-line);
+}
+.widget-intention blockquote {
+  margin: 9px 0 0;
+  color: var(--theme-text);
+  font-family: 'Instrument Serif';
+  font-size: 18px;
+  line-height: 1.4;
+}
+.widget-checklist {
+  max-height: calc(100vh - 330px);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.widget-checklist::-webkit-scrollbar {
+  display: none;
+}
+.widget-checklist article {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 10px;
+  min-height: 68px;
+  border-bottom: 1px solid var(--theme-line);
+  color: var(--theme-accent);
+}
+.widget-checklist article > span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.widget-checklist small {
+  color: var(--theme-accent);
+  font-size: 7px;
+  letter-spacing: 0.14em;
+}
+.widget-checklist strong {
+  overflow: hidden;
+  color: var(--theme-text);
+  font-size: 12px;
+  font-weight: 520;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.widget-checklist i {
+  overflow: hidden;
+  color: var(--theme-muted);
+  font-size: 8px;
+  font-style: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.widget-checklist button {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  padding: 0;
+  background: transparent;
+  color: var(--theme-muted);
+}
+.widget-checklist article.complete button {
+  background: var(--theme-accent);
+  color: var(--theme-accent-contrast);
+}
+.widget-checklist article.complete strong {
+  color: var(--theme-muted);
+  text-decoration: line-through;
+}
+.widget-empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 54px 0;
+  color: var(--theme-faint);
+}
+.widget-empty p {
+  margin: 0;
+  font-size: 11px;
+}
+.widget-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding-top: 18px;
+  color: var(--theme-faint);
+  font-family: 'Instrument Serif';
+  font-size: 13px;
+}
+.widget-footer span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--theme-accent);
+}
 [data-theme]
   :is(
     .commitment-actions .primary-action,
