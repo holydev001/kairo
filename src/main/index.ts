@@ -1,10 +1,19 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } from 'electron'
-import type { AppTheme, BackupResult, WidgetPreferences } from '../shared/settings'
+import type {
+  AppTheme,
+  BackupResult,
+  QuoteWidgetPreferences,
+  WidgetKind,
+  WidgetPreferences
+} from '../shared/settings'
 import { JournalDatabase } from './database'
 
 let journal: JournalDatabase
-let widgetWindow: BrowserWindow | null = null
+const widgetWindows: Record<WidgetKind, BrowserWindow | null> = {
+  checklist: null,
+  quote: null
+}
 
 app.setName('Kairo')
 app.setAppUserModelId('dev.holydev.kairo')
@@ -28,24 +37,38 @@ const windowThemes: Record<AppTheme, { background: string; symbols: string }> = 
   verdant: { background: '#0e1510', symbols: '#8fa192' }
 }
 
-const widgetSizes: Record<WidgetPreferences['size'], [number, number]> = {
-  compact: [300, 330],
-  standard: [370, 480],
-  expanded: [440, 620]
+const widgetSizes: Record<WidgetKind, Record<WidgetPreferences['size'], [number, number]>> = {
+  checklist: {
+    compact: [290, 310],
+    standard: [370, 480],
+    expanded: [440, 620]
+  },
+  quote: {
+    compact: [310, 230],
+    standard: [380, 300],
+    expanded: [440, 380]
+  }
 }
 
 function applyWindowTheme(theme: AppTheme): void {
   const colors = windowThemes[theme]
   for (const window of BrowserWindow.getAllWindows()) {
-    if (window === widgetWindow) continue
+    if (Object.values(widgetWindows).includes(window)) continue
     window.setBackgroundColor(colors.background)
     window.setTitleBarOverlay({ color: colors.background, symbolColor: colors.symbols, height: 44 })
   }
 }
 
-function applyWidgetPreferences(preferences: WidgetPreferences, animate = true): void {
+type WindowPreferences = WidgetPreferences | QuoteWidgetPreferences
+
+function applyWidgetPreferences(
+  kind: WidgetKind,
+  preferences: WindowPreferences,
+  animate = true
+): void {
+  const widgetWindow = widgetWindows[kind]
   if (!widgetWindow || widgetWindow.isDestroyed()) return
-  const [width, height] = widgetSizes[preferences.size]
+  const [width, height] = widgetSizes[kind][preferences.size]
   widgetWindow.setAlwaysOnTop(preferences.alwaysOnTop, 'floating')
   widgetWindow.setOpacity(preferences.opacity)
   widgetWindow.setSize(width, height, animate)
@@ -105,20 +128,22 @@ function createWindow(): void {
   }
 }
 
-function createWidgetWindow(): void {
+function createWidgetWindow(kind: WidgetKind): void {
+  let widgetWindow = widgetWindows[kind]
   if (widgetWindow && !widgetWindow.isDestroyed()) {
     widgetWindow.show()
     widgetWindow.focus()
     return
   }
 
-  const preferences = journal.getPreferences().widget
-  const [width, height] = widgetSizes[preferences.size]
+  const appPreferences = journal.getPreferences()
+  const preferences = kind === 'checklist' ? appPreferences.widget : appPreferences.quoteWidget
+  const [width, height] = widgetSizes[kind][preferences.size]
   widgetWindow = new BrowserWindow({
     width,
     height,
-    minWidth: 270,
-    minHeight: 280,
+    minWidth: kind === 'checklist' ? 260 : 280,
+    minHeight: kind === 'checklist' ? 260 : 200,
     maxWidth: 560,
     maxHeight: 720,
     frame: false,
@@ -136,18 +161,19 @@ function createWidgetWindow(): void {
       sandbox: true
     }
   })
+  widgetWindows[kind] = widgetWindow
 
-  applyWidgetPreferences(preferences, false)
-  widgetWindow.once('ready-to-show', () => widgetWindow?.show())
+  applyWidgetPreferences(kind, preferences, false)
+  widgetWindow.once('ready-to-show', () => widgetWindows[kind]?.show())
   widgetWindow.on('closed', () => {
-    widgetWindow = null
+    widgetWindows[kind] = null
   })
 
   if (!app.isPackaged && process.env.ELECTRON_RENDERER_URL) {
-    void widgetWindow.loadURL(`${process.env.ELECTRON_RENDERER_URL}?view=widget`)
+    void widgetWindow.loadURL(`${process.env.ELECTRON_RENDERER_URL}?widget=${kind}`)
   } else {
     void widgetWindow.loadFile(join(__dirname, '../renderer/index.html'), {
-      query: { view: 'widget' }
+      query: { widget: kind }
     })
   }
 }
@@ -175,7 +201,8 @@ app.whenReady().then(async () => {
   ipcMain.handle('settings:save', (event, preferences: unknown) => {
     const saved = journal.savePreferences(preferences)
     applyWindowTheme(saved.theme)
-    applyWidgetPreferences(saved.widget)
+    applyWidgetPreferences('checklist', saved.widget)
+    applyWidgetPreferences('quote', saved.quoteWidget)
     broadcast('settings:updated', saved, event.sender.id)
     return saved
   })
@@ -202,9 +229,12 @@ app.whenReady().then(async () => {
     }
   })
   ipcMain.handle('settings:show-data', () => shell.showItemInFolder(journal.getPath()))
-  ipcMain.handle('widget:open', () => createWidgetWindow())
-  ipcMain.handle('widget:close', () => widgetWindow?.close())
+  ipcMain.handle('widget:open', (_event, kind: WidgetKind) => createWidgetWindow(kind))
+  ipcMain.handle('widget:close', (_event, kind: WidgetKind) => widgetWindows[kind]?.close())
   createWindow()
+  const preferences = journal.getPreferences()
+  if (preferences.widget.alwaysOnDisplay) createWidgetWindow('checklist')
+  if (preferences.quoteWidget.alwaysOnDisplay) createWidgetWindow('quote')
   app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow())
 })
 

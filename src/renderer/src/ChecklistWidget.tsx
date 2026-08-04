@@ -102,7 +102,10 @@ export function ChecklistWidget(): React.JSX.Element {
       <div className="widget-handle">
         <span lang="ja">改</span>
         <GripHorizontal size={14} />
-        <button aria-label="Close widget" onClick={() => void window.kairo.widget.close()}>
+        <button
+          aria-label="Close widget"
+          onClick={() => void window.kairo.widget.close('checklist')}
+        >
           <X size={13} />
         </button>
       </div>

@@ -29,7 +29,7 @@ export function WidgetStudio({
 
   const launchWidget = async (): Promise<void> => {
     await window.kairo.settings.save(preferences)
-    await window.kairo.widget.open()
+    await window.kairo.widget.open('checklist')
   }
 
   return (

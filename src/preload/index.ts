@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { CommitmentCategory, DailyEntry } from '../shared/journal'
 import type { WeeklyReview } from '../shared/weekly-review'
-import type { AppInfo, AppPreferences, BackupResult } from '../shared/settings'
+import type { AppInfo, AppPreferences, BackupResult, WidgetKind } from '../shared/settings'
 
 contextBridge.exposeInMainWorld('kairo', {
   platform: process.platform,
@@ -42,7 +42,7 @@ contextBridge.exposeInMainWorld('kairo', {
     }
   },
   widget: {
-    open: (): Promise<void> => ipcRenderer.invoke('widget:open'),
-    close: (): Promise<void> => ipcRenderer.invoke('widget:close')
+    open: (kind: WidgetKind): Promise<void> => ipcRenderer.invoke('widget:open', kind),
+    close: (kind: WidgetKind): Promise<void> => ipcRenderer.invoke('widget:close', kind)
   }
 })

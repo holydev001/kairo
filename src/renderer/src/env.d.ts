@@ -1,6 +1,6 @@
 import type { CommitmentCategory, DailyEntry } from '../../shared/journal'
 import type { WeeklyReview } from '../../shared/weekly-review'
-import type { AppInfo, AppPreferences, BackupResult } from '../../shared/settings'
+import type { AppInfo, AppPreferences, BackupResult, WidgetKind } from '../../shared/settings'
 
 declare global {
   interface Window {
@@ -29,8 +29,8 @@ declare global {
         onUpdated(listener: (preferences: AppPreferences) => void): () => void
       }
       widget: {
-        open(): Promise<void>
-        close(): Promise<void>
+        open(kind: WidgetKind): Promise<void>
+        close(kind: WidgetKind): Promise<void>
       }
     }
   }
