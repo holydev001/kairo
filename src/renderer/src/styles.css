@@ -2034,6 +2034,7 @@ p {
 }
 [data-theme] .commitment-form,
 [data-theme] .reflection textarea,
+[data-theme] .library-categories > div:last-child,
 [data-theme] .settings-select .select-trigger,
 [data-theme] .backup-panel {
   background: var(--theme-surface);
@@ -2041,6 +2042,7 @@ p {
 [data-theme] .sidebar button.active,
 [data-theme] .select-menu button:hover,
 [data-theme] .select-menu button.selected,
+[data-theme] .select-trigger.open,
 [data-theme] .history-list > button:hover,
 [data-theme] .history-list > button.selected,
 [data-theme] .history-day-trigger:hover,
@@ -2135,6 +2137,199 @@ p {
 [data-theme] .save-state.error,
 [data-theme] .settings-message.error {
   color: var(--theme-danger);
+}
+[data-theme] button {
+  color: var(--theme-muted);
+}
+[data-theme] button:hover:not(:disabled) {
+  color: var(--theme-text);
+}
+[data-theme]
+  :is(
+    .section-title span,
+    .score span,
+    .meters label,
+    .commitments-heading > span,
+    .commitment-actions button,
+    .inline-form label span,
+    .form-fields label span,
+    .form-fields .select-field > span,
+    .icon-picker > p,
+    .commitments-view-summary span,
+    .library-section-heading > span,
+    .daily-log-section-title > span,
+    .daily-log-pulse > label,
+    .weekly-metrics span,
+    .weekly-metrics em,
+    .weekly-section-heading > span:not(.save-state),
+    .week-days article,
+    .history-count,
+    .history-state,
+    .history-list > button,
+    .history-date-block span,
+    .history-meters span,
+    .history-priorities > div,
+    .history-commitments > div,
+    .history-day-trigger,
+    .history-day-summary span,
+    .settings-fields > label > span,
+    .settings-fields > .select-field > span,
+    .backup-panel > div > span,
+    .data-location
+  ) {
+  color: var(--theme-muted);
+}
+[data-theme]
+  :is(
+    .daily-log-intention label span,
+    .daily-log-writing label > span,
+    .daily-log-notes > div > span,
+    .weekly-prompts label > span,
+    .library-categories > div:last-child small,
+    .history-count,
+    .history-day-trigger .history-list-copy small
+  ) {
+  color: var(--theme-accent);
+}
+[data-theme]
+  :is(
+    .library-categories > div:last-child span,
+    .week-days article > strong,
+    .week-days article.recorded > strong,
+    .history-priorities > div.complete
+  ) {
+  color: var(--theme-text);
+}
+[data-theme]
+  :is(
+    .history-list-copy small,
+    .history-list > button > svg,
+    .history-priorities svg,
+    .history-commitments small,
+    .week-days article small
+  ) {
+  color: var(--theme-faint);
+}
+[data-theme]
+  :is(
+    .mission input,
+    .check input,
+    .commitment input,
+    .inline-form input,
+    .form-fields input,
+    .reflection textarea,
+    .library-title-input,
+    .daily-log-intention textarea,
+    .daily-log-priority-list input,
+    .daily-log-writing textarea,
+    .daily-log-notes textarea,
+    .weekly-prompts textarea,
+    .history-intention blockquote,
+    .history-reflection > p:last-child,
+    .history-list-copy strong,
+    .history-commitments strong,
+    .data-location strong,
+    .settings-footer strong
+  ) {
+  color: var(--theme-text) !important;
+}
+[data-theme]
+  :is(
+    .meters span,
+    .daily-log-pulse strong,
+    .history-meters strong,
+    .history-list > button.selected > svg,
+    .history-priorities .complete svg,
+    .history-day.expanded > .history-day-trigger > svg,
+    .history-empty svg,
+    .settings-section-heading > svg,
+    .privacy-note svg,
+    .select-trigger svg,
+    .select-menu button svg,
+    .commitment-topline
+  ) {
+  color: var(--theme-accent);
+}
+[data-theme] :is(.circle-button, .commitment-topline button, .daily-log-priority-list button) {
+  color: var(--theme-muted);
+}
+[data-theme] .daily-log-priority-list .complete input {
+  color: var(--theme-muted) !important;
+}
+[data-theme]
+  :is(
+    .done,
+    .commitment.complete .commitment-controls button:last-child,
+    .daily-log-priority-list .complete button,
+    .week-days article.recorded > div
+  ) {
+  background: var(--theme-accent);
+  color: var(--theme-accent-contrast);
+}
+[data-theme] .commitment.complete .commitment-controls button:first-child {
+  background: transparent;
+  color: var(--theme-faint);
+}
+[data-theme] :is(.icon-action:hover, .commitment-controls button:first-child:hover) {
+  color: var(--theme-danger);
+}
+[data-theme] .icon-picker button {
+  color: var(--theme-muted);
+}
+[data-theme] :is(.icon-picker button:hover, .icon-picker button.selected) {
+  border-color: var(--theme-accent);
+  background: var(--theme-surface-raised);
+  color: var(--theme-accent-strong);
+}
+[data-theme] :is(.select-menu button:hover, .select-menu button.selected) {
+  color: var(--theme-text);
+}
+[data-theme] .select-menu button.selected {
+  color: var(--theme-accent-strong);
+}
+[data-theme]
+  :is(.date-controls button:hover:not(:disabled), .week-controls button:hover:not(:disabled)) {
+  background: var(--theme-glow);
+  color: var(--theme-accent-strong);
+}
+[data-theme] .daily-log-notes textarea {
+  background: var(--theme-sidebar);
+}
+[data-theme] .daily-log-notes textarea:focus,
+[data-theme] .library-title-input:focus {
+  border-color: var(--theme-accent) !important;
+}
+[data-theme] .week-days article.recorded {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-accent) 9%, transparent),
+    transparent 72%
+  );
+}
+[data-theme] :is(.history-list > button.selected, .history-day.expanded > .history-day-trigger) {
+  box-shadow: inset 2px 0 var(--theme-accent);
+}
+[data-theme] .history-commitments > div.complete {
+  background: var(--theme-surface-raised);
+  color: var(--theme-accent-strong);
+}
+[data-theme] .brand-frame {
+  border-color: color-mix(in srgb, var(--theme-accent) 65%, var(--theme-line));
+}
+[data-theme] .brand-mark i {
+  background: var(--theme-accent-strong);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--theme-accent) 70%, transparent);
+}
+[data-theme]
+  :is(
+    .commitment-actions .primary-action,
+    .form-confirm,
+    .commitments-view-actions > button.primary,
+    .settings-primary
+  ) {
+  border-color: var(--theme-accent);
+  background: var(--theme-accent);
+  color: var(--theme-accent-contrast);
 }
 @keyframes spin {
   to {
