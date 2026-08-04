@@ -102,6 +102,11 @@ export function App(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
+    document.documentElement.dataset.theme = preferences.theme
+    document.documentElement.style.colorScheme = preferences.theme === 'ivory' ? 'light' : 'dark'
+  }, [preferences.theme])
+
+  useEffect(() => {
     void window.kairo.journal
       .get(today)
       .then((value) => {
