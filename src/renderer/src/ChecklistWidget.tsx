@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Circle, LoaderCircle } from 'lucide-react'
+import { Check, Circle, GripHorizontal, LoaderCircle, X } from 'lucide-react'
 import { createEmptyEntry, type DailyEntry } from '../../shared/journal'
 import { createDefaultPreferences, type AppPreferences } from '../../shared/settings'
 import { CommitmentIcon } from './commitment-icons'
@@ -55,7 +55,15 @@ export function ChecklistWidget(): React.JSX.Element {
   useEffect(() => {
     document.documentElement.dataset.theme = preferences.theme
     document.documentElement.style.colorScheme = preferences.theme === 'ivory' ? 'light' : 'dark'
-  }, [preferences.theme])
+    document.documentElement.dataset.widgetSize = preferences.widget.size
+    document.documentElement.dataset.widgetTranslucent = String(preferences.widget.translucent)
+    document.documentElement.dataset.widgetBlur = String(preferences.widget.blur)
+  }, [
+    preferences.theme,
+    preferences.widget.blur,
+    preferences.widget.size,
+    preferences.widget.translucent
+  ])
 
   const toggleCommitment = async (
     categoryId: string,
@@ -91,10 +99,12 @@ export function ChecklistWidget(): React.JSX.Element {
 
   return (
     <main className="widget-shell">
-      <div className="widget-titlebar">
+      <div className="widget-handle">
         <span lang="ja">改</span>
-        <strong>KAIRO</strong>
-        <i>DAILY PANEL</i>
+        <GripHorizontal size={14} />
+        <button aria-label="Close widget" onClick={() => void window.kairo.widget.close()}>
+          <X size={13} />
+        </button>
       </div>
 
       <header className="widget-header">
@@ -119,7 +129,7 @@ export function ChecklistWidget(): React.JSX.Element {
         <strong>{progress}%</strong>
       </section>
 
-      {entry.intention.trim() && (
+      {preferences.widget.showIntention && entry.intention.trim() && (
         <section className="widget-intention">
           <p className="eyebrow">TODAY’S INTENTION</p>
           <blockquote>{entry.intention}</blockquote>
@@ -139,7 +149,7 @@ export function ChecklistWidget(): React.JSX.Element {
               <span>
                 <small>{commitment.categoryName.toUpperCase()}</small>
                 <strong>{commitment.title}</strong>
-                {(commitment.detail || commitment.target) && (
+                {preferences.widget.showDetails && (commitment.detail || commitment.target) && (
                   <i>{[commitment.detail, commitment.target].filter(Boolean).join(' · ')}</i>
                 )}
               </span>

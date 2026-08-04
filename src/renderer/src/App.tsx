@@ -28,6 +28,7 @@ import { DailyLogView } from './DailyLogView'
 import { HistoryView } from './HistoryView'
 import { WeeklyReviewView } from './WeeklyReviewView'
 import { SettingsView } from './SettingsView'
+import { WidgetStudio } from './WidgetStudio'
 
 const today = new Date().toISOString().slice(0, 10)
 const kaizenThoughts = [
@@ -60,7 +61,7 @@ function thoughtForToday(): string {
 }
 
 export function App(): React.JSX.Element {
-  const [activeView, setActiveView] = useState<LaunchView | 'settings'>('command')
+  const [activeView, setActiveView] = useState<LaunchView | 'settings' | 'widget'>('command')
   const [preferences, setPreferences] = useState<AppPreferences>(createDefaultPreferences)
   const [preferencesHydrated, setPreferencesHydrated] = useState(false)
   const [entry, setEntry] = useState<DailyEntry>(() => createEmptyEntry(today))
@@ -300,9 +301,9 @@ export function App(): React.JSX.Element {
         </nav>
         <div className="sidebar-footer-actions">
           <button
-            className="widget-launch"
-            title="Open checklist panel"
-            onClick={() => void window.kairo.widget.open()}
+            className={activeView === 'widget' ? 'widget-launch active' : 'widget-launch'}
+            title="Configure checklist widget"
+            onClick={() => setActiveView('widget')}
           >
             <PanelsTopLeft size={17} />
             <span className="nav-label">Checklist Panel</span>
@@ -647,6 +648,11 @@ export function App(): React.JSX.Element {
           hidden={activeView !== 'settings'}
           preferences={preferences}
           hydrated={preferencesHydrated}
+          onChange={setPreferences}
+        />
+        <WidgetStudio
+          hidden={activeView !== 'widget'}
+          preferences={preferences}
           onChange={setPreferences}
         />
       </section>
