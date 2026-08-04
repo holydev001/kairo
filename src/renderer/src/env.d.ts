@@ -10,6 +10,7 @@ declare global {
         get(date: string): Promise<DailyEntry>
         list(limit?: number): Promise<DailyEntry[]>
         save(entry: DailyEntry): Promise<DailyEntry>
+        onUpdated(listener: (entry: DailyEntry) => void): () => void
       }
       weeklyReview: {
         get(weekStart: string): Promise<WeeklyReview>
@@ -25,6 +26,10 @@ declare global {
         info(): Promise<AppInfo>
         createBackup(): Promise<BackupResult>
         showData(): Promise<void>
+        onUpdated(listener: (preferences: AppPreferences) => void): () => void
+      }
+      widget: {
+        open(): Promise<void>
       }
     }
   }

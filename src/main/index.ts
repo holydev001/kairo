@@ -4,6 +4,7 @@ import type { AppTheme, BackupResult } from '../shared/settings'
 import { JournalDatabase } from './database'
 
 let journal: JournalDatabase
+let widgetWindow: BrowserWindow | null = null
 
 app.setName('Kairo')
 app.setAppUserModelId('dev.holydev.kairo')
@@ -32,6 +33,14 @@ function applyWindowTheme(theme: AppTheme): void {
   for (const window of BrowserWindow.getAllWindows()) {
     window.setBackgroundColor(colors.background)
     window.setTitleBarOverlay({ color: colors.background, symbolColor: colors.symbols, height: 44 })
+  }
+}
+
+function broadcast(channel: string, value: unknown, excludedWebContentsId?: number): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window.isDestroyed() && window.webContents.id !== excludedWebContentsId) {
+      window.webContents.send(channel, value)
+    }
   }
 }
 
@@ -78,11 +87,63 @@ function createWindow(): void {
   }
 }
 
+function createWidgetWindow(): void {
+  if (widgetWindow && !widgetWindow.isDestroyed()) {
+    widgetWindow.show()
+    widgetWindow.focus()
+    return
+  }
+
+  const windowTheme = windowThemes[journal.getPreferences().theme]
+  widgetWindow = new BrowserWindow({
+    width: 390,
+    height: 570,
+    minWidth: 320,
+    minHeight: 420,
+    maxWidth: 520,
+    alwaysOnTop: true,
+    maximizable: false,
+    show: false,
+    backgroundColor: windowTheme.background,
+    icon: kairoIcon,
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: windowTheme.background,
+      symbolColor: windowTheme.symbols,
+      height: 44
+    },
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true
+    }
+  })
+
+  widgetWindow.setAlwaysOnTop(true, 'floating')
+  widgetWindow.once('ready-to-show', () => widgetWindow?.show())
+  widgetWindow.on('closed', () => {
+    widgetWindow = null
+  })
+
+  if (!app.isPackaged && process.env.ELECTRON_RENDERER_URL) {
+    void widgetWindow.loadURL(`${process.env.ELECTRON_RENDERER_URL}?view=widget`)
+  } else {
+    void widgetWindow.loadFile(join(__dirname, '../renderer/index.html'), {
+      query: { view: 'widget' }
+    })
+  }
+}
+
 app.whenReady().then(async () => {
   journal = await JournalDatabase.open(join(app.getPath('userData'), 'kairo.sqlite'))
   ipcMain.handle('journal:get', (_event, date: string) => journal.get(date))
   ipcMain.handle('journal:list', (_event, limit?: number) => journal.list(limit))
-  ipcMain.handle('journal:save', (_event, entry: unknown) => journal.save(entry))
+  ipcMain.handle('journal:save', (event, entry: unknown) => {
+    const saved = journal.save(entry)
+    broadcast('journal:updated', saved, event.sender.id)
+    return saved
+  })
   ipcMain.handle('weekly-review:get', (_event, weekStart: string) =>
     journal.getWeeklyReview(weekStart)
   )
@@ -94,9 +155,10 @@ app.whenReady().then(async () => {
     journal.saveCommitmentTemplates(templates)
   )
   ipcMain.handle('settings:get', () => journal.getPreferences())
-  ipcMain.handle('settings:save', (_event, preferences: unknown) => {
+  ipcMain.handle('settings:save', (event, preferences: unknown) => {
     const saved = journal.savePreferences(preferences)
     applyWindowTheme(saved.theme)
+    broadcast('settings:updated', saved, event.sender.id)
     return saved
   })
   ipcMain.handle('settings:info', () => ({
@@ -122,6 +184,7 @@ app.whenReady().then(async () => {
     }
   })
   ipcMain.handle('settings:show-data', () => shell.showItemInFolder(journal.getPath()))
+  ipcMain.handle('widget:open', () => createWidgetWindow())
   createWindow()
   app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow())
 })
