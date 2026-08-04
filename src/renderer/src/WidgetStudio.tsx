@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
   BookOpen,
   Check,
@@ -17,13 +17,13 @@ import type {
 } from '../../shared/settings'
 
 const checklistSizes: Record<WidgetPreferences['size'], string> = {
-  compact: '290 × 310',
+  compact: '270 × 280',
   standard: '370 × 480',
   expanded: '440 × 620'
 }
 
 const quoteSizes: Record<WidgetPreferences['size'], string> = {
-  compact: '310 × 230',
+  compact: '280 × 200',
   standard: '380 × 300',
   expanded: '440 × 380'
 }
@@ -51,21 +51,17 @@ type AppearancePatch = Partial<
 type WidgetStudioProps = {
   hidden: boolean
   preferences: AppPreferences
-  requestedWidget: WidgetKind
   onChange(preferences: AppPreferences): void
 }
 
 export function WidgetStudio({
   hidden,
   preferences,
-  requestedWidget,
   onChange
 }: WidgetStudioProps): React.JSX.Element {
   const [activeWidget, setActiveWidget] = useState<WidgetKind>('checklist')
   const widget = activeWidget === 'checklist' ? preferences.widget : preferences.quoteWidget
   const dimensions = activeWidget === 'checklist' ? checklistSizes : quoteSizes
-
-  useEffect(() => setActiveWidget(requestedWidget), [requestedWidget])
 
   const updateAppearance = (patch: AppearancePatch): void => {
     if (activeWidget === 'checklist') {

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { GripHorizontal, Quote, Settings, X } from 'lucide-react'
 import { dailyQuoteForDate } from '../../shared/quotes'
 import { createDefaultPreferences, type AppPreferences } from '../../shared/settings'
+import { WidgetQuickSettings } from './WidgetQuickSettings'
 
 const today = new Date().toISOString().slice(0, 10)
 
@@ -15,6 +16,7 @@ function formattedDate(): string {
 
 export function QuoteWidget(): React.JSX.Element {
   const [preferences, setPreferences] = useState<AppPreferences>(createDefaultPreferences)
+  const [showSettings, setShowSettings] = useState(false)
   const quote = preferences.quoteWidget
 
   useEffect(() => {
@@ -67,7 +69,7 @@ export function QuoteWidget(): React.JSX.Element {
         <div className="widget-handle-actions">
           <button
             aria-label="Open quote widget settings"
-            onClick={() => void window.kairo.widget.openSettings('quote')}
+            onClick={() => setShowSettings((visible) => !visible)}
           >
             <Settings size={12} />
           </button>
@@ -77,15 +79,26 @@ export function QuoteWidget(): React.JSX.Element {
         </div>
       </div>
 
-      <div className="quote-widget-mark">
-        <Quote size={18} />
+      {showSettings && (
+        <WidgetQuickSettings
+          kind="quote"
+          preferences={preferences}
+          onChange={setPreferences}
+          onClose={() => setShowSettings(false)}
+        />
+      )}
+
+      <div className="widget-scaled-content">
+        <div className="quote-widget-mark">
+          <Quote size={18} />
+        </div>
+        <p className="eyebrow">{label}</p>
+        <blockquote>{content}</blockquote>
+        {attribution && <cite>{attribution}</cite>}
+        <footer>
+          <span />A thought worth returning to.
+        </footer>
       </div>
-      <p className="eyebrow">{label}</p>
-      <blockquote>{content}</blockquote>
-      {attribution && <cite>{attribution}</cite>}
-      <footer>
-        <span />A thought worth returning to.
-      </footer>
     </main>
   )
 }

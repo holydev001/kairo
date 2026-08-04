@@ -31,8 +31,6 @@ declare global {
       widget: {
         open(kind: WidgetKind): Promise<void>
         close(kind: WidgetKind): Promise<void>
-        openSettings(kind: WidgetKind): Promise<void>
-        onSettingsRequested(listener: (kind: WidgetKind) => void): () => void
       }
     }
   }

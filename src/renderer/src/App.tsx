@@ -20,8 +20,7 @@ import { dailyQuoteForDate } from '../../shared/quotes'
 import {
   createDefaultPreferences,
   type AppPreferences,
-  type LaunchView,
-  type WidgetKind
+  type LaunchView
 } from '../../shared/settings'
 import { commitmentIconNames } from './commitment-icon-library'
 import { CommitmentIcon } from './commitment-icons'
@@ -54,7 +53,6 @@ function thoughtForToday(): string {
 
 export function App(): React.JSX.Element {
   const [activeView, setActiveView] = useState<LaunchView | 'settings' | 'widget'>('command')
-  const [widgetToConfigure, setWidgetToConfigure] = useState<WidgetKind>('checklist')
   const [preferences, setPreferences] = useState<AppPreferences>(createDefaultPreferences)
   const [preferencesHydrated, setPreferencesHydrated] = useState(false)
   const [entry, setEntry] = useState<DailyEntry>(() => createEmptyEntry(today))
@@ -100,15 +98,6 @@ export function App(): React.JSX.Element {
     document.documentElement.dataset.theme = preferences.theme
     document.documentElement.style.colorScheme = preferences.theme === 'ivory' ? 'light' : 'dark'
   }, [preferences.theme])
-
-  useEffect(
-    () =>
-      window.kairo.widget.onSettingsRequested((kind) => {
-        setWidgetToConfigure(kind)
-        setActiveView('widget')
-      }),
-    []
-  )
 
   useEffect(() => {
     void window.kairo.journal
@@ -655,7 +644,6 @@ export function App(): React.JSX.Element {
         <WidgetStudio
           hidden={activeView !== 'widget'}
           preferences={preferences}
-          requestedWidget={widgetToConfigure}
           onChange={setPreferences}
         />
       </section>

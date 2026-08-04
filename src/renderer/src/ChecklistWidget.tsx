@@ -3,6 +3,7 @@ import { Check, Circle, GripHorizontal, LoaderCircle, Settings, X } from 'lucide
 import { createEmptyEntry, type DailyEntry } from '../../shared/journal'
 import { createDefaultPreferences, type AppPreferences } from '../../shared/settings'
 import { CommitmentIcon } from './commitment-icons'
+import { WidgetQuickSettings } from './WidgetQuickSettings'
 
 const today = new Date().toISOString().slice(0, 10)
 
@@ -18,6 +19,7 @@ export function ChecklistWidget(): React.JSX.Element {
   const [entry, setEntry] = useState<DailyEntry>(() => createEmptyEntry(today))
   const [preferences, setPreferences] = useState<AppPreferences>(createDefaultPreferences)
   const [status, setStatus] = useState<'loading' | 'saved' | 'saving' | 'error'>('loading')
+  const [showSettings, setShowSettings] = useState(false)
 
   const commitments = useMemo(
     () =>
@@ -115,7 +117,7 @@ export function ChecklistWidget(): React.JSX.Element {
         <div className="widget-handle-actions">
           <button
             aria-label="Open checklist widget settings"
-            onClick={() => void window.kairo.widget.openSettings('checklist')}
+            onClick={() => setShowSettings((visible) => !visible)}
           >
             <Settings size={12} />
           </button>
@@ -128,69 +130,84 @@ export function ChecklistWidget(): React.JSX.Element {
         </div>
       </div>
 
-      <header className="widget-header">
-        <div>
-          <p className="eyebrow">{widgetDate().toUpperCase()}</p>
-          <h1>Today’s commitments.</h1>
-        </div>
-        <span className={`save-state ${status}`}>
-          {(status === 'loading' || status === 'saving') && <LoaderCircle size={11} />}
-          {status === 'loading' ? 'Opening' : status}
-        </span>
-      </header>
-
-      <section className="widget-progress">
-        <div>
-          <span>{completed} KEPT</span>
-          <span>{commitments.length - completed} REMAIN</span>
-        </div>
-        <div className="progress">
-          <i style={{ width: `${progress}%` }} />
-        </div>
-        <strong>{progress}%</strong>
-      </section>
-
-      {preferences.widget.showIntention && entry.intention.trim() && (
-        <section className="widget-intention">
-          <p className="eyebrow">TODAY’S INTENTION</p>
-          <blockquote>{entry.intention}</blockquote>
-        </section>
+      {showSettings && (
+        <WidgetQuickSettings
+          kind="checklist"
+          preferences={preferences}
+          onChange={setPreferences}
+          onClose={() => setShowSettings(false)}
+        />
       )}
 
-      <section className="widget-checklist">
-        {commitments.length === 0 ? (
-          <div className="widget-empty">
-            <Circle size={20} />
-            <p>No commitments for today.</p>
+      <div className="widget-scaled-content">
+        <header className="widget-header">
+          <div>
+            <p className="eyebrow">{widgetDate().toUpperCase()}</p>
+            <h1>Today’s commitments.</h1>
           </div>
-        ) : (
-          commitments.map((commitment) => (
-            <article className={commitment.completed ? 'complete' : ''} key={commitment.id}>
-              <CommitmentIcon name={commitment.icon} size={17} />
-              <span>
-                <small>{commitment.categoryName.toUpperCase()}</small>
-                <strong>{commitment.title}</strong>
-                {preferences.widget.showDetails && (commitment.detail || commitment.target) && (
-                  <i>{[commitment.detail, commitment.target].filter(Boolean).join(' · ')}</i>
-                )}
-              </span>
-              <button
-                aria-label={`Mark ${commitment.title} ${commitment.completed ? 'incomplete' : 'complete'}`}
-                onClick={() =>
-                  void toggleCommitment(commitment.categoryId, commitment.id, !commitment.completed)
-                }
-              >
-                {commitment.completed ? <Check size={13} /> : <Circle size={18} />}
-              </button>
-            </article>
-          ))
-        )}
-      </section>
+          <span className={`save-state ${status}`}>
+            {(status === 'loading' || status === 'saving') && <LoaderCircle size={11} />}
+            {status === 'loading' ? 'Opening' : status}
+          </span>
+        </header>
 
-      <footer className="widget-footer">
-        <span />
-        Small actions. Kept daily.
-      </footer>
+        <section className="widget-progress">
+          <div>
+            <span>{completed} KEPT</span>
+            <span>{commitments.length - completed} REMAIN</span>
+          </div>
+          <div className="progress">
+            <i style={{ width: `${progress}%` }} />
+          </div>
+          <strong>{progress}%</strong>
+        </section>
+
+        {preferences.widget.showIntention && entry.intention.trim() && (
+          <section className="widget-intention">
+            <p className="eyebrow">TODAY’S INTENTION</p>
+            <blockquote>{entry.intention}</blockquote>
+          </section>
+        )}
+
+        <section className="widget-checklist">
+          {commitments.length === 0 ? (
+            <div className="widget-empty">
+              <Circle size={20} />
+              <p>No commitments for today.</p>
+            </div>
+          ) : (
+            commitments.map((commitment) => (
+              <article className={commitment.completed ? 'complete' : ''} key={commitment.id}>
+                <CommitmentIcon name={commitment.icon} size={17} />
+                <span>
+                  <small>{commitment.categoryName.toUpperCase()}</small>
+                  <strong>{commitment.title}</strong>
+                  {preferences.widget.showDetails && (commitment.detail || commitment.target) && (
+                    <i>{[commitment.detail, commitment.target].filter(Boolean).join(' · ')}</i>
+                  )}
+                </span>
+                <button
+                  aria-label={`Mark ${commitment.title} ${commitment.completed ? 'incomplete' : 'complete'}`}
+                  onClick={() =>
+                    void toggleCommitment(
+                      commitment.categoryId,
+                      commitment.id,
+                      !commitment.completed
+                    )
+                  }
+                >
+                  {commitment.completed ? <Check size={13} /> : <Circle size={18} />}
+                </button>
+              </article>
+            ))
+          )}
+        </section>
+
+        <footer className="widget-footer">
+          <span />
+          Small actions. Kept daily.
+        </footer>
+      </div>
     </main>
   )
 }
