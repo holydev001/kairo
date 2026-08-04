@@ -1,4 +1,4 @@
-import type { DailyEntry } from '../../shared/journal'
+import type { CommitmentCategory, DailyEntry } from '../../shared/journal'
 import type { WeeklyReview } from '../../shared/weekly-review'
 
 declare global {
@@ -13,6 +13,10 @@ declare global {
       weeklyReview: {
         get(weekStart: string): Promise<WeeklyReview>
         save(review: WeeklyReview): Promise<WeeklyReview>
+      }
+      commitments: {
+        get(): Promise<CommitmentCategory[]>
+        save(templates: CommitmentCategory[]): Promise<CommitmentCategory[]>
       }
     }
   }

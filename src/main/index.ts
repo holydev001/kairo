@@ -67,6 +67,10 @@ app.whenReady().then(async () => {
   ipcMain.handle('weekly-review:save', (_event, review: unknown) =>
     journal.saveWeeklyReview(review)
   )
+  ipcMain.handle('commitments:get', () => journal.getCommitmentTemplates())
+  ipcMain.handle('commitments:save', (_event, templates: unknown) =>
+    journal.saveCommitmentTemplates(templates)
+  )
   createWindow()
   app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow())
 })

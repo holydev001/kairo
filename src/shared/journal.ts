@@ -23,8 +23,9 @@ export const commitmentCategorySchema = z.object({
 
 export type CommitmentCategory = z.infer<typeof commitmentCategorySchema>
 export type Commitment = z.infer<typeof commitmentSchema>
+export const commitmentTemplatesSchema = z.array(commitmentCategorySchema).max(16)
 
-function defaultCommitmentCategories(): CommitmentCategory[] {
+export function createDefaultCommitmentCategories(): CommitmentCategory[] {
   return [
     {
       id: 'health',
@@ -78,7 +79,7 @@ const dailyEntryBaseSchema = z.object({
   commitmentCategories: z
     .array(commitmentCategorySchema)
     .max(16)
-    .default(defaultCommitmentCategories),
+    .default(createDefaultCommitmentCategories),
   mood: z.number().int().min(1).max(10),
   energy: z.number().int().min(1).max(10),
   reflection: z.string().max(2000),
@@ -100,7 +101,7 @@ function migrateLegacyEntry(value: unknown): unknown {
   const legacy = entry.commitments as LegacyCommitments | undefined
   if (!legacy) return value
 
-  const categories = defaultCommitmentCategories()
+  const categories = createDefaultCommitmentCategories()
   const workout = categories[0]?.commitments[0]
   const reading = categories[1]?.commitments[0]
   const scripture = categories[2]?.commitments[0]
@@ -125,7 +126,10 @@ function migrateLegacyEntry(value: unknown): unknown {
 export const dailyEntrySchema = z.preprocess(migrateLegacyEntry, dailyEntryBaseSchema)
 export type DailyEntry = z.infer<typeof dailyEntryBaseSchema>
 
-export function createEmptyEntry(date: string): DailyEntry {
+export function createEmptyEntry(
+  date: string,
+  commitmentCategories = createDefaultCommitmentCategories()
+): DailyEntry {
   return {
     date,
     intention: '',
@@ -134,7 +138,7 @@ export function createEmptyEntry(date: string): DailyEntry {
       text: '',
       completed: false
     })),
-    commitmentCategories: defaultCommitmentCategories(),
+    commitmentCategories: structuredClone(commitmentCategories),
     mood: 5,
     energy: 5,
     reflection: '',
