@@ -58,9 +58,19 @@ export function ChecklistWidget(): React.JSX.Element {
     document.documentElement.dataset.widgetSize = preferences.widget.size
     document.documentElement.dataset.widgetTranslucent = String(preferences.widget.translucent)
     document.documentElement.dataset.widgetBlur = String(preferences.widget.blur)
+    document.documentElement.style.setProperty(
+      '--widget-background-opacity',
+      `${Math.round(preferences.widget.backgroundOpacity * 100)}%`
+    )
+    document.documentElement.style.setProperty(
+      '--widget-blur-intensity',
+      `${preferences.widget.blurIntensity}px`
+    )
   }, [
+    preferences.widget.backgroundOpacity,
     preferences.theme,
     preferences.widget.blur,
+    preferences.widget.blurIntensity,
     preferences.widget.size,
     preferences.widget.translucent
   ])

@@ -84,8 +84,14 @@ export function WidgetStudio({
             </div>
             <div className="widget-toggles">
               <WidgetToggle
-                label="Always above other windows"
-                detail="Keep the widget visible while you work."
+                label="Always on display"
+                detail="Restore this widget whenever Kairo starts."
+                checked={widget.alwaysOnDisplay}
+                onChange={(checked) => update({ alwaysOnDisplay: checked })}
+              />
+              <WidgetToggle
+                label="Display over all windows"
+                detail="Keep it floating above your other applications."
                 checked={widget.alwaysOnTop}
                 onChange={(checked) => update({ alwaysOnTop: checked })}
               />
@@ -113,6 +119,36 @@ export function WidgetStudio({
                 max="100"
                 value={Math.round(widget.opacity * 100)}
                 onChange={(event) => update({ opacity: Number(event.target.value) / 100 })}
+              />
+            </label>
+            <label className="widget-opacity">
+              <span>
+                <strong>Background opacity</strong>
+                <small>{Math.round(widget.backgroundOpacity * 100)}%</small>
+              </span>
+              <p>Adjust the surface only. Text, icons and controls remain fully clear.</p>
+              <input
+                type="range"
+                min="20"
+                max="100"
+                value={Math.round(widget.backgroundOpacity * 100)}
+                onChange={(event) =>
+                  update({ backgroundOpacity: Number(event.target.value) / 100 })
+                }
+              />
+            </label>
+            <label className={`widget-opacity ${widget.blur ? '' : 'disabled'}`}>
+              <span>
+                <strong>Backdrop blur intensity</strong>
+                <small>{widget.blurIntensity}px</small>
+              </span>
+              <input
+                type="range"
+                min="0"
+                max="40"
+                value={widget.blurIntensity}
+                disabled={!widget.blur}
+                onChange={(event) => update({ blurIntensity: Number(event.target.value) })}
               />
             </label>
           </section>
@@ -147,7 +183,16 @@ export function WidgetStudio({
             <Sparkles size={14} />
             LIVE CHARACTER
           </div>
-          <div className={`widget-preview-card ${widget.translucent ? 'translucent' : ''}`}>
+          <div
+            className={`widget-preview-card ${widget.translucent ? 'translucent' : ''}`}
+            style={
+              {
+                '--preview-background-opacity': `${Math.round(widget.backgroundOpacity * 100)}%`,
+                '--preview-blur': `${widget.blurIntensity}px`,
+                opacity: widget.opacity
+              } as React.CSSProperties
+            }
+          >
             <p className="eyebrow">TODAY · 2 OF 3</p>
             <h3>Quiet progress.</h3>
             <div>
