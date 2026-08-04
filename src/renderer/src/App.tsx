@@ -7,6 +7,7 @@ import {
   Feather,
   Home,
   LoaderCircle,
+  PanelsTopLeft,
   Plus,
   Settings,
   Sparkles,
@@ -115,6 +116,14 @@ export function App(): React.JSX.Element {
         setHydrated(true)
       })
       .catch(() => setStatus('error'))
+
+    return window.kairo.journal.onUpdated((value) => {
+      if (value.date === today) {
+        setEntry(value)
+        setStatus('saved')
+        setHydrated(true)
+      }
+    })
   }, [])
 
   useEffect(() => {
@@ -289,13 +298,23 @@ export function App(): React.JSX.Element {
             <span className="nav-label">Weekly Review</span>
           </button>
         </nav>
-        <button
-          className={activeView === 'settings' ? 'settings active' : 'settings'}
-          onClick={() => setActiveView('settings')}
-        >
-          <Settings size={17} />
-          <span className="nav-label">Settings</span>
-        </button>
+        <div className="sidebar-footer-actions">
+          <button
+            className="widget-launch"
+            title="Open checklist panel"
+            onClick={() => void window.kairo.widget.open()}
+          >
+            <PanelsTopLeft size={17} />
+            <span className="nav-label">Checklist Panel</span>
+          </button>
+          <button
+            className={activeView === 'settings' ? 'settings active' : 'settings'}
+            onClick={() => setActiveView('settings')}
+          >
+            <Settings size={17} />
+            <span className="nav-label">Settings</span>
+          </button>
+        </div>
       </aside>
 
       <section className="content">
