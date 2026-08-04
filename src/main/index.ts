@@ -8,7 +8,7 @@ import type {
   WidgetPreferences
 } from '../shared/settings'
 import { JournalDatabase } from './database'
-import { attachWindowToDesktop, detachWindowFromDesktop } from './windows-desktop'
+import { excludeWindowFromDesktopPeek } from './windows-peek'
 
 let journal: JournalDatabase
 let mainWindow: BrowserWindow | null = null
@@ -16,7 +16,7 @@ const widgetWindows: Record<WidgetKind, BrowserWindow | null> = {
   checklist: null,
   quote: null
 }
-const desktopPresenceTimers: Partial<Record<WidgetKind, NodeJS.Timeout>> = {}
+const widgetTopLevels: Partial<Record<WidgetKind, 'none' | 'floating' | 'screen-saver'>> = {}
 const backgroundLaunch = process.argv.includes('--widget-background')
 
 app.setName('Kairo')
@@ -43,12 +43,12 @@ const windowThemes: Record<AppTheme, { background: string; symbols: string }> = 
 
 const widgetSizes: Record<WidgetKind, Record<WidgetPreferences['size'], [number, number]>> = {
   checklist: {
-    compact: [270, 280],
+    compact: [296, 384],
     standard: [370, 480],
     expanded: [440, 620]
   },
   quote: {
-    compact: [280, 200],
+    compact: [304, 240],
     standard: [380, 300],
     expanded: [440, 380]
   }
@@ -64,31 +64,6 @@ function applyWindowTheme(theme: AppTheme): void {
 }
 
 type WindowPreferences = WidgetPreferences | QuoteWidgetPreferences
-
-function preferencesForWidget(kind: WidgetKind): WindowPreferences {
-  const preferences = journal.getPreferences()
-  return kind === 'checklist' ? preferences.widget : preferences.quoteWidget
-}
-
-function recoverDesktopPresence(kind: WidgetKind): void {
-  const widgetWindow = widgetWindows[kind]
-  if (!widgetWindow || widgetWindow.isDestroyed()) return
-  const preferences = preferencesForWidget(kind)
-  if (!preferences.alwaysOnDisplay) return
-
-  if (widgetWindow.isMinimized()) widgetWindow.restore()
-  if (!widgetWindow.isVisible()) widgetWindow.showInactive()
-}
-
-function syncDesktopPresence(kind: WidgetKind, preferences: WindowPreferences): void {
-  const existingTimer = desktopPresenceTimers[kind]
-  if (existingTimer) clearInterval(existingTimer)
-  delete desktopPresenceTimers[kind]
-
-  if (preferences.alwaysOnDisplay) {
-    desktopPresenceTimers[kind] = setInterval(() => recoverDesktopPresence(kind), 600)
-  }
-}
 
 function syncLoginLaunch(): void {
   if (process.platform !== 'win32' || !app.isPackaged) return
@@ -111,18 +86,26 @@ function applyWidgetPreferences(
   const widgetWindow = widgetWindows[kind]
   if (!widgetWindow || widgetWindow.isDestroyed()) return
   const [width, height] = widgetSizes[kind][preferences.size]
-  widgetWindow.setAlwaysOnTop(preferences.alwaysOnTop, 'floating')
-  widgetWindow.setOpacity(preferences.opacity)
-  widgetWindow.setSize(width, height, animate)
+  const staysVisible = preferences.alwaysOnDisplay || preferences.alwaysOnTop
+  const topLevel = preferences.alwaysOnDisplay
+    ? 'screen-saver'
+    : preferences.alwaysOnTop
+      ? 'floating'
+      : 'none'
+  if (widgetTopLevels[kind] !== topLevel) {
+    widgetWindow.setAlwaysOnTop(staysVisible, topLevel === 'none' ? 'normal' : topLevel)
+    widgetTopLevels[kind] = topLevel
+  }
+  if (widgetWindow.getOpacity() !== preferences.opacity) {
+    widgetWindow.setOpacity(preferences.opacity)
+  }
+  const [currentWidth, currentHeight] = widgetWindow.getSize()
+  if (currentWidth !== width || currentHeight !== height) {
+    widgetWindow.setSize(width, height, animate)
+  }
   if (process.platform === 'win32') {
     widgetWindow.setBackgroundMaterial(preferences.blur ? 'acrylic' : 'none')
-    if (preferences.alwaysOnDisplay && !preferences.alwaysOnTop) {
-      attachWindowToDesktop(widgetWindow.getNativeWindowHandle())
-    } else {
-      detachWindowFromDesktop(widgetWindow.getNativeWindowHandle())
-    }
   }
-  syncDesktopPresence(kind, preferences)
 }
 
 function broadcast(channel: string, value: unknown, excludedWebContentsId?: number): void {
@@ -196,15 +179,15 @@ function createWidgetWindow(kind: WidgetKind): void {
   widgetWindow = new BrowserWindow({
     width,
     height,
-    minWidth: kind === 'checklist' ? 270 : 280,
-    minHeight: kind === 'checklist' ? 280 : 200,
+    minWidth: kind === 'checklist' ? 296 : 304,
+    minHeight: kind === 'checklist' ? 384 : 240,
     maxWidth: 560,
     maxHeight: 720,
     frame: false,
     thickFrame: false,
     transparent: process.platform !== 'win32',
     skipTaskbar: true,
-    alwaysOnTop: preferences.alwaysOnTop,
+    alwaysOnTop: preferences.alwaysOnDisplay || preferences.alwaysOnTop,
     maximizable: false,
     show: false,
     backgroundColor: '#00000000',
@@ -214,21 +197,19 @@ function createWidgetWindow(kind: WidgetKind): void {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: true
+      sandbox: true,
+      backgroundThrottling: false
     }
   })
   widgetWindows[kind] = widgetWindow
+  if (process.platform === 'win32') {
+    excludeWindowFromDesktopPeek(widgetWindow.getNativeWindowHandle())
+  }
 
   applyWidgetPreferences(kind, preferences, false)
   widgetWindow.once('ready-to-show', () => widgetWindows[kind]?.show())
-  widgetWindow.on('minimize', () => {
-    if (!preferencesForWidget(kind).alwaysOnDisplay) return
-    setTimeout(() => recoverDesktopPresence(kind), 0)
-  })
   widgetWindow.on('closed', () => {
-    const timer = desktopPresenceTimers[kind]
-    if (timer) clearInterval(timer)
-    delete desktopPresenceTimers[kind]
+    delete widgetTopLevels[kind]
     widgetWindows[kind] = null
   })
 
