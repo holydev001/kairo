@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import type { Database } from 'sql.js'
 import initSqlJs from 'sql.js'
@@ -15,6 +15,11 @@ import {
   weeklyReviewSchema,
   type WeeklyReview
 } from '../shared/weekly-review'
+import {
+  appPreferencesSchema,
+  createDefaultPreferences,
+  type AppPreferences
+} from '../shared/settings'
 
 const require = createRequire(import.meta.url)
 
@@ -165,6 +170,38 @@ export class JournalDatabase {
     )
     this.persist()
     return templates
+  }
+
+  getPreferences(): AppPreferences {
+    const statement = this.database.prepare(
+      "SELECT payload FROM app_settings WHERE key = 'preferences' LIMIT 1"
+    )
+    const preferences = statement.step()
+      ? appPreferencesSchema.parse(JSON.parse(String(statement.getAsObject().payload)))
+      : createDefaultPreferences()
+    statement.free()
+    return preferences
+  }
+
+  savePreferences(value: unknown): AppPreferences {
+    const preferences = appPreferencesSchema.parse(value)
+    this.database.run(
+      `INSERT INTO app_settings (key, payload)
+       VALUES ('preferences', :payload)
+       ON CONFLICT(key) DO UPDATE SET payload = excluded.payload`,
+      { ':payload': JSON.stringify(preferences) }
+    )
+    this.persist()
+    return preferences
+  }
+
+  backup(destination: string): void {
+    this.persist()
+    copyFileSync(this.path, destination)
+  }
+
+  getPath(): string {
+    return this.path
   }
 
   private persist(): void {

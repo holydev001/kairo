@@ -1,5 +1,6 @@
 import type { CommitmentCategory, DailyEntry } from '../../shared/journal'
 import type { WeeklyReview } from '../../shared/weekly-review'
+import type { AppInfo, AppPreferences, BackupResult } from '../../shared/settings'
 
 declare global {
   interface Window {
@@ -17,6 +18,13 @@ declare global {
       commitments: {
         get(): Promise<CommitmentCategory[]>
         save(templates: CommitmentCategory[]): Promise<CommitmentCategory[]>
+      }
+      settings: {
+        get(): Promise<AppPreferences>
+        save(preferences: AppPreferences): Promise<AppPreferences>
+        info(): Promise<AppInfo>
+        createBackup(): Promise<BackupResult>
+        showData(): Promise<void>
       }
     }
   }

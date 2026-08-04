@@ -1,5 +1,6 @@
 import { join } from 'node:path'
-import { app, BrowserWindow, ipcMain, nativeImage, shell } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } from 'electron'
+import type { BackupResult } from '../shared/settings'
 import { JournalDatabase } from './database'
 
 let journal: JournalDatabase
@@ -71,6 +72,33 @@ app.whenReady().then(async () => {
   ipcMain.handle('commitments:save', (_event, templates: unknown) =>
     journal.saveCommitmentTemplates(templates)
   )
+  ipcMain.handle('settings:get', () => journal.getPreferences())
+  ipcMain.handle('settings:save', (_event, preferences: unknown) =>
+    journal.savePreferences(preferences)
+  )
+  ipcMain.handle('settings:info', () => ({
+    version: app.getVersion(),
+    dataPath: journal.getPath()
+  }))
+  ipcMain.handle('settings:create-backup', async (): Promise<BackupResult> => {
+    const date = new Date().toISOString().slice(0, 10)
+    const result = await dialog.showSaveDialog({
+      title: 'Create a Kairo backup',
+      defaultPath: join(app.getPath('documents'), `kairo-backup-${date}.sqlite`),
+      buttonLabel: 'Create backup',
+      filters: [{ name: 'Kairo database', extensions: ['sqlite'] }]
+    })
+
+    if (result.canceled || !result.filePath) return { status: 'cancelled' }
+
+    journal.backup(result.filePath)
+    return {
+      status: 'saved',
+      path: result.filePath,
+      createdAt: new Date().toISOString()
+    }
+  })
+  ipcMain.handle('settings:show-data', () => shell.showItemInFolder(journal.getPath()))
   createWindow()
   app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow())
 })
