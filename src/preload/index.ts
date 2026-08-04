@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
-import type { DailyEntry } from '../shared/journal'
+import type { CommitmentCategory, DailyEntry } from '../shared/journal'
 import type { WeeklyReview } from '../shared/weekly-review'
 
 contextBridge.exposeInMainWorld('kairo', {
@@ -14,5 +14,10 @@ contextBridge.exposeInMainWorld('kairo', {
       ipcRenderer.invoke('weekly-review:get', weekStart),
     save: (review: WeeklyReview): Promise<WeeklyReview> =>
       ipcRenderer.invoke('weekly-review:save', review)
+  },
+  commitments: {
+    get: (): Promise<CommitmentCategory[]> => ipcRenderer.invoke('commitments:get'),
+    save: (templates: CommitmentCategory[]): Promise<CommitmentCategory[]> =>
+      ipcRenderer.invoke('commitments:save', templates)
   }
 })

@@ -17,6 +17,7 @@ import {
 import { createEmptyEntry, type DailyEntry } from '../../shared/journal'
 import { commitmentIconNames } from './commitment-icon-library'
 import { CommitmentIcon } from './commitment-icons'
+import { CommitmentsView } from './CommitmentsView'
 import { DailyLogView } from './DailyLogView'
 import { HistoryView } from './HistoryView'
 import { WeeklyReviewView } from './WeeklyReviewView'
@@ -53,9 +54,9 @@ function thoughtForToday(): string {
 }
 
 export function App(): React.JSX.Element {
-  const [activeView, setActiveView] = useState<'command' | 'daily' | 'history' | 'weekly'>(
-    'command'
-  )
+  const [activeView, setActiveView] = useState<
+    'command' | 'daily' | 'commitments' | 'history' | 'weekly'
+  >('command')
   const [entry, setEntry] = useState<DailyEntry>(() => createEmptyEntry(today))
   const [status, setStatus] = useState<'loading' | 'saved' | 'saving' | 'error'>('loading')
   const [hydrated, setHydrated] = useState(false)
@@ -245,7 +246,10 @@ export function App(): React.JSX.Element {
             <Feather size={17} />
             <span className="nav-label">Daily Log</span>
           </button>
-          <button>
+          <button
+            className={activeView === 'commitments' ? 'active' : ''}
+            onClick={() => setActiveView('commitments')}
+          >
             <Target size={17} />
             <span className="nav-label">Commitments</span>
           </button>
@@ -593,6 +597,7 @@ export function App(): React.JSX.Element {
           </section>
         </div>
         <DailyLogView hidden={activeView !== 'daily'} />
+        <CommitmentsView hidden={activeView !== 'commitments'} />
         <HistoryView hidden={activeView !== 'history'} />
         <WeeklyReviewView hidden={activeView !== 'weekly'} />
       </section>

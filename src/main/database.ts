@@ -2,7 +2,14 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import type { Database } from 'sql.js'
 import initSqlJs from 'sql.js'
-import { createEmptyEntry, dailyEntrySchema, type DailyEntry } from '../shared/journal'
+import {
+  commitmentTemplatesSchema,
+  createDefaultCommitmentCategories,
+  createEmptyEntry,
+  dailyEntrySchema,
+  type CommitmentCategory,
+  type DailyEntry
+} from '../shared/journal'
 import {
   createEmptyWeeklyReview,
   weeklyReviewSchema,
@@ -39,6 +46,12 @@ export class JournalDatabase {
         updated_at TEXT NOT NULL
       )
     `)
+    database.run(`
+      CREATE TABLE IF NOT EXISTS app_settings (
+        key TEXT PRIMARY KEY,
+        payload TEXT NOT NULL
+      )
+    `)
 
     const journal = new JournalDatabase(database, path)
     journal.persist()
@@ -52,7 +65,7 @@ export class JournalDatabase {
     statement.bind({ ':date': date })
     const entry = statement.step()
       ? dailyEntrySchema.parse(JSON.parse(String(statement.getAsObject().payload)))
-      : createEmptyEntry(date)
+      : createEmptyEntry(date, this.getCommitmentTemplates())
     statement.free()
     return entry
   }
@@ -123,6 +136,35 @@ export class JournalDatabase {
     )
     this.persist()
     return review
+  }
+
+  getCommitmentTemplates(): CommitmentCategory[] {
+    const statement = this.database.prepare(
+      "SELECT payload FROM app_settings WHERE key = 'commitment_templates' LIMIT 1"
+    )
+    const templates = statement.step()
+      ? commitmentTemplatesSchema.parse(JSON.parse(String(statement.getAsObject().payload)))
+      : createDefaultCommitmentCategories()
+    statement.free()
+    return templates
+  }
+
+  saveCommitmentTemplates(value: unknown): CommitmentCategory[] {
+    const templates = commitmentTemplatesSchema.parse(value).map((category) => ({
+      ...category,
+      commitments: category.commitments.map((commitment) => ({
+        ...commitment,
+        completed: false
+      }))
+    }))
+    this.database.run(
+      `INSERT INTO app_settings (key, payload)
+       VALUES ('commitment_templates', :payload)
+       ON CONFLICT(key) DO UPDATE SET payload = excluded.payload`,
+      { ':payload': JSON.stringify(templates) }
+    )
+    this.persist()
+    return templates
   }
 
   private persist(): void {

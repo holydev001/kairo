@@ -685,10 +685,159 @@ p {
   line-height: 1.6;
 }
 .command-center[hidden],
+.commitments-view[hidden],
 .daily-log-view[hidden],
 .history-view[hidden],
 .weekly-review-view[hidden] {
   display: none;
+}
+.commitments-view-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+  padding-bottom: 31px;
+  border-bottom: 1px solid #292823;
+}
+.commitments-view-header h1 {
+  margin: 9px 0 8px;
+}
+.commitments-view-header > div:first-child > p:last-child {
+  margin: 0;
+  color: #77746c;
+  font-size: 13px;
+}
+.commitments-view-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.commitments-view-actions > .save-state {
+  margin-right: 10px;
+}
+.commitments-view-actions > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  border: 1px solid #35332d;
+  border-radius: 0;
+  padding: 0 11px;
+  background: transparent;
+  color: #99958b;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+.commitments-view-actions > button.primary {
+  border-color: #8f743f;
+  background: #b89550;
+  color: #0b0b0a;
+}
+.commitments-view-summary {
+  display: grid;
+  grid-template-columns: 150px 180px minmax(0, 1fr);
+  border-bottom: 1px solid #292823;
+}
+.commitments-view-summary > div {
+  display: grid;
+  align-content: center;
+  min-height: 112px;
+  padding: 20px 24px;
+  border-right: 1px solid #292823;
+}
+.commitments-view-summary span {
+  color: #77736a;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+}
+.commitments-view-summary strong {
+  margin-top: 8px;
+  color: #ddd7cc;
+  font-family: 'Instrument Serif';
+  font-size: 32px;
+  font-weight: 400;
+}
+.commitments-view-summary > p {
+  align-self: center;
+  justify-self: end;
+  max-width: 300px;
+  margin: 0;
+  color: #6e6a62;
+  font-size: 10px;
+  line-height: 1.55;
+  text-align: right;
+}
+.library-category-form,
+.library-commitment-form {
+  margin-top: 28px;
+}
+.library-categories,
+.library-templates {
+  padding: 35px 0 40px;
+  border-bottom: 1px solid #292823;
+}
+.library-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+.library-section-heading h2 {
+  margin: 8px 0 0;
+  font-family: 'Instrument Serif';
+  font-size: 25px;
+  font-weight: 400;
+}
+.library-section-heading > span {
+  color: #716b60;
+  font-size: 8px;
+  letter-spacing: 0.14em;
+}
+.library-categories > div:last-child {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid #292823;
+  border-left: 1px solid #292823;
+}
+.library-categories > div:last-child > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px 24px;
+  align-items: center;
+  min-height: 48px;
+  border-right: 1px solid #292823;
+  border-bottom: 1px solid #292823;
+  padding: 0 11px 0 14px;
+}
+.library-categories > div:last-child span {
+  color: #b6b0a6;
+  font-size: 11px;
+}
+.library-categories > div:last-child small {
+  color: #8c7446;
+  font-size: 9px;
+}
+.library-categories > div:last-child button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #55524c;
+}
+.library-categories > div:last-child button:hover {
+  color: #b66f62;
+}
+.library-title-input {
+  margin-top: 4px;
+  border-bottom-color: transparent !important;
+  padding-bottom: 4px !important;
+  color: #ddd7cc !important;
+  font-family: 'Instrument Serif' !important;
+  font-size: 24px !important;
+}
+.library-title-input:focus {
+  border-bottom-color: #725c32 !important;
 }
 .daily-log-header {
   display: flex;
@@ -1590,6 +1739,21 @@ p {
     border-left: 0;
     padding-left: 0;
   }
+  .commitments-view-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .commitments-view-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .commitments-view-summary > p {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    max-width: none;
+    border-top: 1px solid #292823;
+    padding: 18px 0;
+    text-align: left;
+  }
   .commitment-grid {
     grid-template-columns: 1fr;
   }
@@ -1759,5 +1923,16 @@ p {
   .daily-log-notes {
     grid-template-columns: 1fr;
     gap: 22px;
+  }
+  .commitments-view-actions {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .commitments-view-actions > .save-state {
+    width: 100%;
+    margin-bottom: 6px;
+  }
+  .library-categories > div:last-child {
+    grid-template-columns: 1fr;
   }
 }
