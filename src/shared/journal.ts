@@ -83,6 +83,7 @@ const dailyEntryBaseSchema = z.object({
   energy: z.number().int().min(1).max(10),
   reflection: z.string().max(2000),
   gratitude: z.string().max(1000),
+  notes: z.string().max(2000).default(''),
   updatedAt: z.string()
 })
 
@@ -138,6 +139,7 @@ export function createEmptyEntry(date: string): DailyEntry {
     energy: 5,
     reflection: '',
     gratitude: '',
+    notes: '',
     updatedAt: new Date().toISOString()
   }
 }
