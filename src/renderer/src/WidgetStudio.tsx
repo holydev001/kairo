@@ -17,13 +17,13 @@ import type {
 } from '../../shared/settings'
 
 const checklistSizes: Record<WidgetPreferences['size'], string> = {
-  compact: '270 × 280',
+  compact: '296 × 384',
   standard: '370 × 480',
   expanded: '440 × 620'
 }
 
 const quoteSizes: Record<WidgetPreferences['size'], string> = {
-  compact: '280 × 200',
+  compact: '304 × 240',
   standard: '380 × 300',
   expanded: '440 × 380'
 }

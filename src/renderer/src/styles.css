@@ -2555,86 +2555,8 @@ html[data-widget-blur='true'] .widget-shell {
   border-radius: 50%;
   background: var(--theme-accent);
 }
-html[data-widget-size='compact'] .widget-shell {
-  padding: 41px 10px 8px;
-}
-html[data-widget-size='compact'] .widget-scaled-content {
-  flex: none;
-  width: 128.21%;
-  height: 128.21%;
-  zoom: 0.78;
-}
-html[data-widget-size='compact'] .widget-header h1 {
-  margin-top: 4px;
-  font-size: 20px;
-}
-html[data-widget-size='compact'] .widget-intention,
-html[data-widget-size='compact'] .widget-checklist i,
-html[data-widget-size='compact'] .widget-footer {
-  display: none;
-}
-html[data-widget-size='compact'] .widget-header {
-  gap: 8px;
-  padding-bottom: 10px;
-}
-html[data-widget-size='compact'] .widget-progress {
-  gap: 7px 10px;
-  padding: 10px 0;
-}
-html[data-widget-size='compact'] .widget-progress > strong {
-  font-size: 20px;
-}
-html[data-widget-size='compact'] .widget-checklist article {
-  grid-template-columns: 17px minmax(0, 1fr) 20px;
-  gap: 6px;
-  min-height: 43px;
-}
-html[data-widget-size='compact'] .widget-checklist strong {
-  font-size: 10px;
-}
-html[data-widget-size='compact'] .widget-checklist article > svg {
-  width: 14px;
-  height: 14px;
-}
-html[data-widget-size='compact'] .widget-header .save-state,
-html[data-widget-size='compact'] .widget-progress > div:first-child {
-  display: none;
-}
-html[data-widget-size='compact'] .widget-progress {
-  grid-template-columns: minmax(0, 1fr) auto;
-}
 html[data-widget-size='expanded'] .widget-checklist article {
   min-height: 76px;
-}
-@media (max-width: 330px), (max-height: 340px) {
-  .widget-shell {
-    padding: 41px 11px 9px;
-  }
-  .widget-header {
-    padding-bottom: 10px;
-  }
-  .widget-header h1 {
-    font-size: clamp(17px, 7vw, 20px);
-  }
-  .widget-header .save-state,
-  .widget-progress > div:first-child,
-  .widget-intention,
-  .widget-footer,
-  .widget-checklist small,
-  .widget-checklist i {
-    display: none;
-  }
-  .widget-progress {
-    padding: 10px 0;
-  }
-  .widget-checklist article {
-    grid-template-columns: 18px minmax(0, 1fr) 20px;
-    gap: 6px;
-    min-height: 43px;
-  }
-  .widget-checklist strong {
-    font-size: 10px;
-  }
 }
 .widget-studio {
   max-width: 980px;
@@ -3081,6 +3003,7 @@ html[data-widget-size='expanded'] .widget-checklist article {
   padding: 52px 34px 24px;
 }
 .quote-widget-shell .widget-scaled-content {
+  align-items: flex-start;
   justify-content: center;
 }
 .quote-widget-mark {
@@ -3093,12 +3016,16 @@ html[data-widget-size='expanded'] .widget-checklist article {
   color: var(--theme-accent);
 }
 .quote-widget-shell blockquote {
+  display: -webkit-box;
+  overflow: hidden;
   max-width: 380px;
   margin: 13px 0 15px;
   color: var(--theme-text);
   font-family: 'Instrument Serif';
   font-size: 28px;
   line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
 }
 .quote-widget-shell cite {
   color: var(--theme-muted);
@@ -3111,7 +3038,7 @@ html[data-widget-size='expanded'] .widget-checklist article {
   display: flex;
   align-items: center;
   gap: 9px;
-  margin-top: auto;
+  margin-top: 24px;
   padding-top: 16px;
   color: var(--theme-faint);
   font-family: 'Instrument Serif';
@@ -3123,53 +3050,16 @@ html[data-widget-size='expanded'] .widget-checklist article {
   border-radius: 50%;
   background: var(--theme-accent);
 }
-html[data-widget-size='compact'] .quote-widget-shell {
-  padding: 45px 22px 15px;
-}
-html[data-widget-size='compact'] .quote-widget-mark {
-  width: 27px;
-  height: 27px;
-  margin-bottom: 11px;
-}
-html[data-widget-size='compact'] .quote-widget-shell blockquote {
-  margin: 8px 0 10px;
-  font-size: 21px;
-  line-height: 1.22;
-}
-html[data-widget-size='compact'] .quote-widget-shell footer {
-  display: none;
-}
 html[data-widget-size='expanded'] .quote-widget-shell blockquote {
   font-size: 34px;
 }
-@media (max-width: 330px), (max-height: 250px) {
-  .quote-widget-shell {
-    justify-content: flex-start;
-    padding: 42px 18px 12px;
-  }
-  .quote-widget-mark {
-    width: 24px;
-    height: 24px;
-    margin-bottom: 8px;
-  }
-  .quote-widget-mark svg {
-    width: 13px;
-    height: 13px;
-  }
-  .quote-widget-shell blockquote {
-    display: -webkit-box;
-    overflow: hidden;
-    margin: 7px 0 8px;
-    font-size: clamp(17px, 6.5vw, 20px);
-    line-height: 1.2;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 4;
-  }
-  .quote-widget-shell cite {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+
+html[data-widget-size='compact'] .widget-shell {
+  width: 125vw;
+  height: 125vh;
+  min-height: 125vh;
+  transform: scale(0.8);
+  transform-origin: top left;
 }
 [data-theme]
   :is(

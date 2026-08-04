@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { Check, X } from 'lucide-react'
 import type { AppPreferences, WidgetKind, WidgetPreferences } from '../../shared/settings'
 
@@ -20,14 +21,27 @@ export function WidgetQuickSettings({
   onClose(): void
 }): React.JSX.Element {
   const widget = kind === 'checklist' ? preferences.widget : preferences.quoteWidget
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const update = (patch: AppearancePatch): void => {
+  useEffect(
+    () => () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current)
+    },
+    []
+  )
+
+  const update = (patch: AppearancePatch, delayed = false): void => {
     const next =
       kind === 'checklist'
         ? { ...preferences, widget: { ...preferences.widget, ...patch } }
         : { ...preferences, quoteWidget: { ...preferences.quoteWidget, ...patch } }
     onChange(next)
-    void window.kairo.settings.save(next)
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    if (delayed) {
+      saveTimer.current = setTimeout(() => void window.kairo.settings.save(next), 140)
+    } else {
+      void window.kairo.settings.save(next)
+    }
   }
 
   return (
@@ -78,7 +92,7 @@ export function WidgetQuickSettings({
         max={40}
         suffix="px"
         disabled={!widget.blur}
-        onChange={(value) => update({ blurIntensity: value })}
+        onChange={(value) => update({ blurIntensity: value }, true)}
       />
       <QuickRange
         label="Background"
@@ -86,7 +100,7 @@ export function WidgetQuickSettings({
         min={20}
         max={100}
         suffix="%"
-        onChange={(value) => update({ backgroundOpacity: value / 100 })}
+        onChange={(value) => update({ backgroundOpacity: value / 100 }, true)}
       />
     </section>
   )
