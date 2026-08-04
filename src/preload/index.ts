@@ -43,6 +43,13 @@ contextBridge.exposeInMainWorld('kairo', {
   },
   widget: {
     open: (kind: WidgetKind): Promise<void> => ipcRenderer.invoke('widget:open', kind),
-    close: (kind: WidgetKind): Promise<void> => ipcRenderer.invoke('widget:close', kind)
+    close: (kind: WidgetKind): Promise<void> => ipcRenderer.invoke('widget:close', kind),
+    openSettings: (kind: WidgetKind): Promise<void> =>
+      ipcRenderer.invoke('widget:open-settings', kind),
+    onSettingsRequested: (listener: (kind: WidgetKind) => void): (() => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, kind: WidgetKind): void => listener(kind)
+      ipcRenderer.on('widget:settings-requested', handler)
+      return () => ipcRenderer.removeListener('widget:settings-requested', handler)
+    }
   }
 })

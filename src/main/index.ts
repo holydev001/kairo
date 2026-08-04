@@ -10,10 +10,13 @@ import type {
 import { JournalDatabase } from './database'
 
 let journal: JournalDatabase
+let mainWindow: BrowserWindow | null = null
 const widgetWindows: Record<WidgetKind, BrowserWindow | null> = {
   checklist: null,
   quote: null
 }
+const desktopPresenceTimers: Partial<Record<WidgetKind, NodeJS.Timeout>> = {}
+const backgroundLaunch = process.argv.includes('--widget-background')
 
 app.setName('Kairo')
 app.setAppUserModelId('dev.holydev.kairo')
@@ -61,6 +64,44 @@ function applyWindowTheme(theme: AppTheme): void {
 
 type WindowPreferences = WidgetPreferences | QuoteWidgetPreferences
 
+function preferencesForWidget(kind: WidgetKind): WindowPreferences {
+  const preferences = journal.getPreferences()
+  return kind === 'checklist' ? preferences.widget : preferences.quoteWidget
+}
+
+function recoverDesktopPresence(kind: WidgetKind): void {
+  const widgetWindow = widgetWindows[kind]
+  if (!widgetWindow || widgetWindow.isDestroyed()) return
+  const preferences = preferencesForWidget(kind)
+  if (!preferences.alwaysOnDisplay) return
+
+  if (widgetWindow.isMinimized()) widgetWindow.restore()
+  if (!widgetWindow.isVisible()) widgetWindow.showInactive()
+}
+
+function syncDesktopPresence(kind: WidgetKind, preferences: WindowPreferences): void {
+  const existingTimer = desktopPresenceTimers[kind]
+  if (existingTimer) clearInterval(existingTimer)
+  delete desktopPresenceTimers[kind]
+
+  if (preferences.alwaysOnDisplay) {
+    desktopPresenceTimers[kind] = setInterval(() => recoverDesktopPresence(kind), 600)
+  }
+}
+
+function syncLoginLaunch(): void {
+  if (process.platform !== 'win32' || !app.isPackaged) return
+  const preferences = journal.getPreferences()
+  const openAtLogin = preferences.widget.alwaysOnDisplay || preferences.quoteWidget.alwaysOnDisplay
+  app.setLoginItemSettings({
+    openAtLogin,
+    enabled: openAtLogin,
+    path: process.execPath,
+    args: ['--widget-background'],
+    name: 'Kairo Widgets'
+  })
+}
+
 function applyWidgetPreferences(
   kind: WidgetKind,
   preferences: WindowPreferences,
@@ -75,6 +116,7 @@ function applyWidgetPreferences(
   if (process.platform === 'win32') {
     widgetWindow.setBackgroundMaterial(preferences.blur ? 'acrylic' : 'none')
   }
+  syncDesktopPresence(kind, preferences)
 }
 
 function broadcast(channel: string, value: unknown, excludedWebContentsId?: number): void {
@@ -85,7 +127,8 @@ function broadcast(channel: string, value: unknown, excludedWebContentsId?: numb
   }
 }
 
-function createWindow(): void {
+function createWindow(): BrowserWindow {
+  if (mainWindow && !mainWindow.isDestroyed()) return mainWindow
   const windowTheme = windowThemes[journal.getPreferences().theme]
   const window = new BrowserWindow({
     width: 1440,
@@ -107,6 +150,10 @@ function createWindow(): void {
       sandbox: true
     }
   })
+  mainWindow = window
+  window.on('closed', () => {
+    mainWindow = null
+  })
 
   window.webContents.setWindowOpenHandler(({ url }) => {
     void shell.openExternal(url)
@@ -125,6 +172,20 @@ function createWindow(): void {
     void window.loadURL(process.env.ELECTRON_RENDERER_URL)
   } else {
     void window.loadFile(join(__dirname, '../renderer/index.html'))
+  }
+  return window
+}
+
+function openWidgetSettings(kind: WidgetKind): void {
+  const window = createWindow()
+  if (window.isMinimized()) window.restore()
+  window.show()
+  window.focus()
+  const sendRequest = (): void => window.webContents.send('widget:settings-requested', kind)
+  if (window.webContents.isLoading()) {
+    window.webContents.once('did-finish-load', sendRequest)
+  } else {
+    sendRequest()
   }
 }
 
@@ -147,12 +208,13 @@ function createWidgetWindow(kind: WidgetKind): void {
     maxWidth: 560,
     maxHeight: 720,
     frame: false,
-    transparent: true,
+    transparent: process.platform !== 'win32',
     skipTaskbar: true,
     alwaysOnTop: preferences.alwaysOnTop,
     maximizable: false,
     show: false,
     backgroundColor: '#00000000',
+    backgroundMaterial: process.platform === 'win32' && preferences.blur ? 'acrylic' : 'none',
     icon: kairoIcon,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -165,7 +227,14 @@ function createWidgetWindow(kind: WidgetKind): void {
 
   applyWidgetPreferences(kind, preferences, false)
   widgetWindow.once('ready-to-show', () => widgetWindows[kind]?.show())
+  widgetWindow.on('minimize', () => {
+    if (!preferencesForWidget(kind).alwaysOnDisplay) return
+    setTimeout(() => recoverDesktopPresence(kind), 0)
+  })
   widgetWindow.on('closed', () => {
+    const timer = desktopPresenceTimers[kind]
+    if (timer) clearInterval(timer)
+    delete desktopPresenceTimers[kind]
     widgetWindows[kind] = null
   })
 
@@ -203,6 +272,7 @@ app.whenReady().then(async () => {
     applyWindowTheme(saved.theme)
     applyWidgetPreferences('checklist', saved.widget)
     applyWidgetPreferences('quote', saved.quoteWidget)
+    syncLoginLaunch()
     broadcast('settings:updated', saved, event.sender.id)
     return saved
   })
@@ -231,11 +301,18 @@ app.whenReady().then(async () => {
   ipcMain.handle('settings:show-data', () => shell.showItemInFolder(journal.getPath()))
   ipcMain.handle('widget:open', (_event, kind: WidgetKind) => createWidgetWindow(kind))
   ipcMain.handle('widget:close', (_event, kind: WidgetKind) => widgetWindows[kind]?.close())
-  createWindow()
+  ipcMain.handle('widget:open-settings', (_event, kind: WidgetKind) => openWidgetSettings(kind))
+  if (!backgroundLaunch) createWindow()
   const preferences = journal.getPreferences()
+  syncLoginLaunch()
   if (preferences.widget.alwaysOnDisplay) createWidgetWindow('checklist')
   if (preferences.quoteWidget.alwaysOnDisplay) createWidgetWindow('quote')
-  app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow())
+  app.on('activate', () => createWindow())
 })
 
-app.on('window-all-closed', () => process.platform !== 'darwin' && app.quit())
+app.on('window-all-closed', () => {
+  if (process.platform === 'darwin') return
+  if (!journal) return app.quit()
+  const preferences = journal.getPreferences()
+  if (!preferences.widget.alwaysOnDisplay && !preferences.quoteWidget.alwaysOnDisplay) app.quit()
+})
