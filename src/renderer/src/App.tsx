@@ -7,6 +7,7 @@ import {
   Feather,
   Home,
   LoaderCircle,
+  PanelsTopLeft,
   Plus,
   Settings,
   Sparkles,
@@ -15,6 +16,7 @@ import {
   X
 } from 'lucide-react'
 import { createEmptyEntry, type DailyEntry } from '../../shared/journal'
+import { dailyQuoteForDate } from '../../shared/quotes'
 import {
   createDefaultPreferences,
   type AppPreferences,
@@ -27,17 +29,9 @@ import { DailyLogView } from './DailyLogView'
 import { HistoryView } from './HistoryView'
 import { WeeklyReviewView } from './WeeklyReviewView'
 import { SettingsView } from './SettingsView'
+import { WidgetStudio } from './WidgetStudio'
 
 const today = new Date().toISOString().slice(0, 10)
-const kaizenThoughts = [
-  'Small steps, repeated with intention, become transformation.',
-  'Improve the system, and the result will follow.',
-  'Do not chase perfection. Refine what you practiced yesterday.',
-  'A quiet commitment kept daily is stronger than sudden motivation.',
-  'Notice honestly. Adjust deliberately. Continue patiently.',
-  'The direction matters more than the speed.',
-  'Become better by making the next action better.'
-] as const
 
 function greeting(name: string): string {
   const hour = new Date().getHours()
@@ -54,12 +48,11 @@ function formattedDate(): string {
 }
 
 function thoughtForToday(): string {
-  const dayNumber = Math.floor(new Date(`${today}T00:00:00`).getTime() / 86_400_000)
-  return kaizenThoughts[dayNumber % kaizenThoughts.length] ?? kaizenThoughts[0]
+  return dailyQuoteForDate(today)
 }
 
 export function App(): React.JSX.Element {
-  const [activeView, setActiveView] = useState<LaunchView | 'settings'>('command')
+  const [activeView, setActiveView] = useState<LaunchView | 'settings' | 'widget'>('command')
   const [preferences, setPreferences] = useState<AppPreferences>(createDefaultPreferences)
   const [preferencesHydrated, setPreferencesHydrated] = useState(false)
   const [entry, setEntry] = useState<DailyEntry>(() => createEmptyEntry(today))
@@ -115,6 +108,14 @@ export function App(): React.JSX.Element {
         setHydrated(true)
       })
       .catch(() => setStatus('error'))
+
+    return window.kairo.journal.onUpdated((value) => {
+      if (value.date === today) {
+        setEntry(value)
+        setStatus('saved')
+        setHydrated(true)
+      }
+    })
   }, [])
 
   useEffect(() => {
@@ -289,13 +290,23 @@ export function App(): React.JSX.Element {
             <span className="nav-label">Weekly Review</span>
           </button>
         </nav>
-        <button
-          className={activeView === 'settings' ? 'settings active' : 'settings'}
-          onClick={() => setActiveView('settings')}
-        >
-          <Settings size={17} />
-          <span className="nav-label">Settings</span>
-        </button>
+        <div className="sidebar-footer-actions">
+          <button
+            className={activeView === 'widget' ? 'widget-launch active' : 'widget-launch'}
+            title="Configure desktop widgets"
+            onClick={() => setActiveView('widget')}
+          >
+            <PanelsTopLeft size={17} />
+            <span className="nav-label">Widgets</span>
+          </button>
+          <button
+            className={activeView === 'settings' ? 'settings active' : 'settings'}
+            onClick={() => setActiveView('settings')}
+          >
+            <Settings size={17} />
+            <span className="nav-label">Settings</span>
+          </button>
+        </div>
       </aside>
 
       <section className="content">
@@ -628,6 +639,11 @@ export function App(): React.JSX.Element {
           hidden={activeView !== 'settings'}
           preferences={preferences}
           hydrated={preferencesHydrated}
+          onChange={setPreferences}
+        />
+        <WidgetStudio
+          hidden={activeView !== 'widget'}
+          preferences={preferences}
           onChange={setPreferences}
         />
       </section>

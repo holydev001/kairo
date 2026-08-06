@@ -1,6 +1,6 @@
 import type { CommitmentCategory, DailyEntry } from '../../shared/journal'
 import type { WeeklyReview } from '../../shared/weekly-review'
-import type { AppInfo, AppPreferences, BackupResult } from '../../shared/settings'
+import type { AppInfo, AppPreferences, BackupResult, WidgetKind } from '../../shared/settings'
 
 declare global {
   interface Window {
@@ -10,6 +10,7 @@ declare global {
         get(date: string): Promise<DailyEntry>
         list(limit?: number): Promise<DailyEntry[]>
         save(entry: DailyEntry): Promise<DailyEntry>
+        onUpdated(listener: (entry: DailyEntry) => void): () => void
       }
       weeklyReview: {
         get(weekStart: string): Promise<WeeklyReview>
@@ -25,6 +26,11 @@ declare global {
         info(): Promise<AppInfo>
         createBackup(): Promise<BackupResult>
         showData(): Promise<void>
+        onUpdated(listener: (preferences: AppPreferences) => void): () => void
+      }
+      widget: {
+        open(kind: WidgetKind): Promise<void>
+        close(kind: WidgetKind): Promise<void>
       }
     }
   }

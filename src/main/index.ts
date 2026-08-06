@@ -1,9 +1,23 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } from 'electron'
-import type { AppTheme, BackupResult } from '../shared/settings'
+import type {
+  AppTheme,
+  BackupResult,
+  QuoteWidgetPreferences,
+  WidgetKind,
+  WidgetPreferences
+} from '../shared/settings'
 import { JournalDatabase } from './database'
+import { excludeWindowFromDesktopPeek } from './windows-peek'
 
 let journal: JournalDatabase
+let mainWindow: BrowserWindow | null = null
+const widgetWindows: Record<WidgetKind, BrowserWindow | null> = {
+  checklist: null,
+  quote: null
+}
+const widgetTopLevels: Partial<Record<WidgetKind, 'none' | 'floating' | 'screen-saver'>> = {}
+const backgroundLaunch = process.argv.includes('--widget-background')
 
 app.setName('Kairo')
 app.setAppUserModelId('dev.holydev.kairo')
@@ -27,15 +41,83 @@ const windowThemes: Record<AppTheme, { background: string; symbols: string }> = 
   verdant: { background: '#0e1510', symbols: '#8fa192' }
 }
 
+const widgetSizes: Record<WidgetKind, Record<WidgetPreferences['size'], [number, number]>> = {
+  checklist: {
+    compact: [296, 384],
+    standard: [370, 480],
+    expanded: [440, 620]
+  },
+  quote: {
+    compact: [304, 240],
+    standard: [380, 300],
+    expanded: [440, 380]
+  }
+}
+
 function applyWindowTheme(theme: AppTheme): void {
   const colors = windowThemes[theme]
   for (const window of BrowserWindow.getAllWindows()) {
+    if (Object.values(widgetWindows).includes(window)) continue
     window.setBackgroundColor(colors.background)
     window.setTitleBarOverlay({ color: colors.background, symbolColor: colors.symbols, height: 44 })
   }
 }
 
-function createWindow(): void {
+type WindowPreferences = WidgetPreferences | QuoteWidgetPreferences
+
+function syncLoginLaunch(): void {
+  if (process.platform !== 'win32' || !app.isPackaged) return
+  const preferences = journal.getPreferences()
+  const openAtLogin = preferences.widget.alwaysOnDisplay || preferences.quoteWidget.alwaysOnDisplay
+  app.setLoginItemSettings({
+    openAtLogin,
+    enabled: openAtLogin,
+    path: process.execPath,
+    args: ['--widget-background'],
+    name: 'Kairo Widgets'
+  })
+}
+
+function applyWidgetPreferences(
+  kind: WidgetKind,
+  preferences: WindowPreferences,
+  animate = true
+): void {
+  const widgetWindow = widgetWindows[kind]
+  if (!widgetWindow || widgetWindow.isDestroyed()) return
+  const [width, height] = widgetSizes[kind][preferences.size]
+  const staysVisible = preferences.alwaysOnDisplay || preferences.alwaysOnTop
+  const topLevel = preferences.alwaysOnDisplay
+    ? 'screen-saver'
+    : preferences.alwaysOnTop
+      ? 'floating'
+      : 'none'
+  if (widgetTopLevels[kind] !== topLevel) {
+    widgetWindow.setAlwaysOnTop(staysVisible, topLevel === 'none' ? 'normal' : topLevel)
+    widgetTopLevels[kind] = topLevel
+  }
+  if (widgetWindow.getOpacity() !== preferences.opacity) {
+    widgetWindow.setOpacity(preferences.opacity)
+  }
+  const [currentWidth, currentHeight] = widgetWindow.getSize()
+  if (currentWidth !== width || currentHeight !== height) {
+    widgetWindow.setSize(width, height, animate)
+  }
+  if (process.platform === 'win32') {
+    widgetWindow.setBackgroundMaterial(preferences.blur ? 'acrylic' : 'none')
+  }
+}
+
+function broadcast(channel: string, value: unknown, excludedWebContentsId?: number): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (!window.isDestroyed() && window.webContents.id !== excludedWebContentsId) {
+      window.webContents.send(channel, value)
+    }
+  }
+}
+
+function createWindow(): BrowserWindow {
+  if (mainWindow && !mainWindow.isDestroyed()) return mainWindow
   const windowTheme = windowThemes[journal.getPreferences().theme]
   const window = new BrowserWindow({
     width: 1440,
@@ -57,6 +139,10 @@ function createWindow(): void {
       sandbox: true
     }
   })
+  mainWindow = window
+  window.on('closed', () => {
+    mainWindow = null
+  })
 
   window.webContents.setWindowOpenHandler(({ url }) => {
     void shell.openExternal(url)
@@ -76,13 +162,75 @@ function createWindow(): void {
   } else {
     void window.loadFile(join(__dirname, '../renderer/index.html'))
   }
+  return window
+}
+
+function createWidgetWindow(kind: WidgetKind): void {
+  let widgetWindow = widgetWindows[kind]
+  if (widgetWindow && !widgetWindow.isDestroyed()) {
+    widgetWindow.show()
+    widgetWindow.focus()
+    return
+  }
+
+  const appPreferences = journal.getPreferences()
+  const preferences = kind === 'checklist' ? appPreferences.widget : appPreferences.quoteWidget
+  const [width, height] = widgetSizes[kind][preferences.size]
+  widgetWindow = new BrowserWindow({
+    width,
+    height,
+    minWidth: kind === 'checklist' ? 296 : 304,
+    minHeight: kind === 'checklist' ? 384 : 240,
+    maxWidth: 560,
+    maxHeight: 720,
+    frame: false,
+    thickFrame: false,
+    transparent: process.platform !== 'win32',
+    skipTaskbar: true,
+    alwaysOnTop: preferences.alwaysOnDisplay || preferences.alwaysOnTop,
+    maximizable: false,
+    show: false,
+    backgroundColor: '#00000000',
+    backgroundMaterial: process.platform === 'win32' && preferences.blur ? 'acrylic' : 'none',
+    icon: kairoIcon,
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      sandbox: true,
+      backgroundThrottling: false
+    }
+  })
+  widgetWindows[kind] = widgetWindow
+  if (process.platform === 'win32') {
+    excludeWindowFromDesktopPeek(widgetWindow.getNativeWindowHandle())
+  }
+
+  applyWidgetPreferences(kind, preferences, false)
+  widgetWindow.once('ready-to-show', () => widgetWindows[kind]?.show())
+  widgetWindow.on('closed', () => {
+    delete widgetTopLevels[kind]
+    widgetWindows[kind] = null
+  })
+
+  if (!app.isPackaged && process.env.ELECTRON_RENDERER_URL) {
+    void widgetWindow.loadURL(`${process.env.ELECTRON_RENDERER_URL}?widget=${kind}`)
+  } else {
+    void widgetWindow.loadFile(join(__dirname, '../renderer/index.html'), {
+      query: { widget: kind }
+    })
+  }
 }
 
 app.whenReady().then(async () => {
   journal = await JournalDatabase.open(join(app.getPath('userData'), 'kairo.sqlite'))
   ipcMain.handle('journal:get', (_event, date: string) => journal.get(date))
   ipcMain.handle('journal:list', (_event, limit?: number) => journal.list(limit))
-  ipcMain.handle('journal:save', (_event, entry: unknown) => journal.save(entry))
+  ipcMain.handle('journal:save', (event, entry: unknown) => {
+    const saved = journal.save(entry)
+    broadcast('journal:updated', saved, event.sender.id)
+    return saved
+  })
   ipcMain.handle('weekly-review:get', (_event, weekStart: string) =>
     journal.getWeeklyReview(weekStart)
   )
@@ -94,9 +242,13 @@ app.whenReady().then(async () => {
     journal.saveCommitmentTemplates(templates)
   )
   ipcMain.handle('settings:get', () => journal.getPreferences())
-  ipcMain.handle('settings:save', (_event, preferences: unknown) => {
+  ipcMain.handle('settings:save', (event, preferences: unknown) => {
     const saved = journal.savePreferences(preferences)
     applyWindowTheme(saved.theme)
+    applyWidgetPreferences('checklist', saved.widget)
+    applyWidgetPreferences('quote', saved.quoteWidget)
+    syncLoginLaunch()
+    broadcast('settings:updated', saved, event.sender.id)
     return saved
   })
   ipcMain.handle('settings:info', () => ({
@@ -122,8 +274,19 @@ app.whenReady().then(async () => {
     }
   })
   ipcMain.handle('settings:show-data', () => shell.showItemInFolder(journal.getPath()))
-  createWindow()
-  app.on('activate', () => BrowserWindow.getAllWindows().length === 0 && createWindow())
+  ipcMain.handle('widget:open', (_event, kind: WidgetKind) => createWidgetWindow(kind))
+  ipcMain.handle('widget:close', (_event, kind: WidgetKind) => widgetWindows[kind]?.close())
+  if (!backgroundLaunch) createWindow()
+  const preferences = journal.getPreferences()
+  syncLoginLaunch()
+  if (preferences.widget.alwaysOnDisplay) createWidgetWindow('checklist')
+  if (preferences.quoteWidget.alwaysOnDisplay) createWidgetWindow('quote')
+  app.on('activate', () => createWindow())
 })
 
-app.on('window-all-closed', () => process.platform !== 'darwin' && app.quit())
+app.on('window-all-closed', () => {
+  if (process.platform === 'darwin') return
+  if (!journal) return app.quit()
+  const preferences = journal.getPreferences()
+  if (!preferences.widget.alwaysOnDisplay && !preferences.quoteWidget.alwaysOnDisplay) app.quit()
+})
