@@ -1,0 +1,72 @@
+name: Release beta
+
+on:
+  push:
+    tags:
+      - 'v*-beta.*'
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Build Windows beta
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify source
+        run: pnpm check
+
+      - name: Build Windows installer
+        run: pnpm package:win
+
+      - name: Create checksums
+        shell: pwsh
+        run: |
+          $installers = Get-ChildItem release -Filter '*.exe' -File
+          $checksums = $installers | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+            "$hash  $($_.Name)"
+          }
+          $checksums | Set-Content release/SHA256SUMS.txt
+
+      - name: Preserve build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: kairo-windows-${{ github.ref_name }}
+          path: |
+            release/*.exe
+            release/*.blockmap
+            release/*.yml
+            release/SHA256SUMS.txt
+
+      - name: Publish GitHub prerelease
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $assets = @(
+            Get-ChildItem release -Filter 'Kairo-Setup-*.exe' -File
+            Get-ChildItem release -Filter 'Kairo-Setup-*.exe.blockmap' -File
+            Get-Item release/latest.yml
+            Get-Item release/SHA256SUMS.txt
+          )
+          gh release create $env:GITHUB_REF_NAME $assets.FullName `
+            --verify-tag `
+            --prerelease `
+            --generate-notes `
+            --title "Kairo $env:GITHUB_REF_NAME"
