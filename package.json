@@ -1,13 +1,19 @@
 {
   "name": "kairo",
-  "version": "0.1.0",
+  "version": "0.1.0-beta.1",
   "private": true,
   "description": "A local-first personal command center for continuous improvement.",
+  "author": "holydev001",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/holydev001/kairo.git"
+  },
   "main": "out/main/index.js",
   "type": "module",
   "scripts": {
     "dev": "electron-vite dev",
     "build": "pnpm typecheck && electron-vite build",
+    "package:win": "pnpm build && electron-builder --win --x64 --publish never",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "lint": "eslint . --max-warnings=0",
@@ -43,6 +49,7 @@
     "@types/sql.js": "^1.4.11",
     "@vitejs/plugin-react": "^4.3.4",
     "electron": "^33.2.1",
+    "electron-builder": "26.15.3",
     "electron-vite": "^2.3.0",
     "eslint": "^9.17.0",
     "eslint-plugin-react-hooks": "^5.1.0",
