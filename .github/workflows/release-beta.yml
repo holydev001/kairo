@@ -32,7 +32,12 @@ jobs:
         run: pnpm check
 
       - name: Build Windows installer
-        run: pnpm package:win
+        shell: pwsh
+        run: |
+          $releaseVersion = $env:GITHUB_REF_NAME.TrimStart('v')
+          pnpm build
+          pnpm exec electron-builder --win --x64 --publish never `
+            --config.extraMetadata.version=$releaseVersion
 
       - name: Create checksums
         shell: pwsh
