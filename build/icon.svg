@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <rect width="1024" height="1024" fill="#0b0b0a"/>
+  <path
+    d="M176 376V176h256M592 176h256v200M848 648v200H592M432 848H176V648"
+    fill="none"
+    stroke="#8f743f"
+    stroke-width="28"
+  />
+  <text
+    x="512"
+    y="642"
+    fill="#d8b568"
+    font-family="Yu Mincho, Noto Serif JP, serif"
+    font-size="416"
+    font-weight="700"
+    text-anchor="middle"
+  >改</text>
+  <circle cx="828" cy="820" r="32" fill="#d9b86c"/>
+</svg>

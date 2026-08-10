@@ -3,6 +3,7 @@ node_modules/
 .tools/
 out/
 dist/
+release/
 *.log
 *.tsbuildinfo
 .env

@@ -13,6 +13,10 @@ pnpm dev
 
 Run `pnpm check` before opening a pull request. Direct changes to `main` are prohibited after this bootstrap commit; every feature must use its own branch and be merged by the repository administrator.
 
+## Beta builds
+
+Windows beta installers are published as GitHub prereleases. See [the beta distribution guide](docs/BETA.md) for local packaging, release tagging, and the tester checklist.
+
 ## Product laws
 
 1. Local first; AI is optional and explicit.
