@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react'
 import {
+  Bug,
   Check,
   ChevronDown,
+  Copy,
   Download,
+  ExternalLink,
   FolderOpen,
   HardDrive,
   Flame,
+  Lightbulb,
   LoaderCircle,
   Monitor,
+  MessageSquareWarning,
   MoonStar,
   ShieldCheck,
   Sprout,
@@ -75,6 +80,14 @@ type SettingsViewProps = {
   onChange(preferences: AppPreferences): void
 }
 
+type FeedbackKind = 'bug' | 'idea' | 'general'
+
+const feedbackKindLabels: Record<FeedbackKind, string> = {
+  bug: 'Bug report',
+  idea: 'Feature idea',
+  general: 'General feedback'
+}
+
 export function SettingsView({
   hidden,
   preferences,
@@ -85,6 +98,11 @@ export function SettingsView({
   const [showLaunchMenu, setShowLaunchMenu] = useState(false)
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'error'>('saved')
   const [backupState, setBackupState] = useState<'idle' | 'working' | 'saved' | 'error'>('idle')
+  const [feedbackKind, setFeedbackKind] = useState<FeedbackKind>('bug')
+  const [feedbackText, setFeedbackText] = useState('')
+  const [feedbackState, setFeedbackState] = useState<
+    'idle' | 'working' | 'copied' | 'opened' | 'error'
+  >('idle')
 
   useEffect(() => {
     if (hidden || info) return
@@ -136,6 +154,45 @@ export function SettingsView({
         minute: '2-digit'
       }).format(new Date(preferences.lastBackupAt))
     : 'No backup created yet'
+
+  const feedbackDetails = (): string => {
+    const version = info?.version ?? 'unknown'
+    const widgetSummary = `checklist=${preferences.widget.size}, quote=${preferences.quoteWidget.size}`
+    return [
+      `## ${feedbackKindLabels[feedbackKind]}`,
+      '',
+      feedbackText.trim() || '_No additional description provided._',
+      '',
+      '---',
+      `Kairo version: ${version}`,
+      `Platform: ${window.kairo.platform}`,
+      `User agent: ${navigator.userAgent}`,
+      `Theme: ${preferences.theme}`,
+      `Widget sizes: ${widgetSummary}`,
+      '',
+      '_No journal content is included in this report._'
+    ].join('\n')
+  }
+
+  const copyFeedback = async (): Promise<void> => {
+    setFeedbackState('working')
+    try {
+      await window.kairo.settings.copyDiagnostics(feedbackDetails())
+      setFeedbackState('copied')
+    } catch {
+      setFeedbackState('error')
+    }
+  }
+
+  const openFeedback = async (): Promise<void> => {
+    setFeedbackState('working')
+    try {
+      await window.kairo.settings.openFeedback(feedbackDetails())
+      setFeedbackState('opened')
+    } catch {
+      setFeedbackState('error')
+    }
+  }
 
   return (
     <div className="settings-view" hidden={hidden}>
@@ -290,6 +347,66 @@ export function SettingsView({
           </span>
           <i>Reveal</i>
         </button>
+      </section>
+
+      <section className="settings-section feedback-section">
+        <div className="settings-section-heading">
+          <MessageSquareWarning size={18} />
+          <div>
+            <p className="eyebrow">BETA FEEDBACK</p>
+            <h2>Help shape what comes next.</h2>
+          </div>
+        </div>
+        <div className="feedback-panel">
+          <p>
+            Tell us what happened or what you would like to see. Kairo adds only technical context
+            to the report; your journal entries stay out of it.
+          </p>
+          <div className="feedback-kind-list" role="group" aria-label="Feedback type">
+            {(Object.keys(feedbackKindLabels) as FeedbackKind[]).map((kind) => {
+              const Icon = kind === 'bug' ? Bug : kind === 'idea' ? Lightbulb : MessageSquareWarning
+              return (
+                <button
+                  className={feedbackKind === kind ? 'feedback-kind selected' : 'feedback-kind'}
+                  key={kind}
+                  type="button"
+                  aria-pressed={feedbackKind === kind}
+                  onClick={() => setFeedbackKind(kind)}
+                >
+                  <Icon size={14} />
+                  {feedbackKindLabels[kind]}
+                </button>
+              )
+            })}
+          </div>
+          <textarea
+            className="feedback-textarea"
+            value={feedbackText}
+            onChange={(event) => setFeedbackText(event.target.value)}
+            placeholder="What should we know?"
+            maxLength={2000}
+            rows={5}
+          />
+          <div className="feedback-actions">
+            <button
+              className="settings-secondary"
+              type="button"
+              onClick={() => void copyFeedback()}
+            >
+              <Copy size={14} />
+              Copy report
+            </button>
+            <button className="settings-primary" type="button" onClick={() => void openFeedback()}>
+              <ExternalLink size={14} />
+              Open GitHub issue
+            </button>
+          </div>
+          <p className={`settings-message ${feedbackState === 'error' ? 'error' : 'success'}`}>
+            {feedbackState === 'copied' && 'Diagnostic report copied to your clipboard.'}
+            {feedbackState === 'opened' && 'GitHub opened with a prepared issue draft.'}
+            {feedbackState === 'error' && 'Kairo could not prepare the feedback report.'}
+          </p>
+        </div>
       </section>
 
       <section className="settings-footer">
