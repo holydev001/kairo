@@ -34,6 +34,10 @@ contextBridge.exposeInMainWorld('kairo', {
     info: (): Promise<AppInfo> => ipcRenderer.invoke('settings:info'),
     createBackup: (): Promise<BackupResult> => ipcRenderer.invoke('settings:create-backup'),
     showData: (): Promise<void> => ipcRenderer.invoke('settings:show-data'),
+    copyDiagnostics: (details: string): Promise<void> =>
+      ipcRenderer.invoke('settings:copy-diagnostics', details),
+    openFeedback: (details: string): Promise<void> =>
+      ipcRenderer.invoke('settings:open-feedback', details),
     onUpdated: (listener: (preferences: AppPreferences) => void): (() => void) => {
       const handler = (_event: Electron.IpcRendererEvent, preferences: AppPreferences): void =>
         listener(preferences)
