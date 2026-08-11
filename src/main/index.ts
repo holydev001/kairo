@@ -1,5 +1,5 @@
 import { join } from 'node:path'
-import { app, BrowserWindow, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell } from 'electron'
 import type {
   AppTheme,
   BackupResult,
@@ -274,6 +274,17 @@ app.whenReady().then(async () => {
     }
   })
   ipcMain.handle('settings:show-data', () => shell.showItemInFolder(journal.getPath()))
+  ipcMain.handle('settings:copy-diagnostics', (_event, details: unknown) => {
+    if (typeof details !== 'string') return
+    clipboard.writeText(details)
+  })
+  ipcMain.handle('settings:open-feedback', (_event, details: unknown) => {
+    const body = typeof details === 'string' ? details : ''
+    const url = new URL('https://github.com/holydev001/kairo/issues/new')
+    url.searchParams.set('title', 'Kairo beta feedback')
+    url.searchParams.set('body', body)
+    void shell.openExternal(url.toString())
+  })
   ipcMain.handle('widget:open', (_event, kind: WidgetKind) => createWidgetWindow(kind))
   ipcMain.handle('widget:close', (_event, kind: WidgetKind) => widgetWindows[kind]?.close())
   if (!backgroundLaunch) createWindow()

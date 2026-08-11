@@ -26,6 +26,8 @@ declare global {
         info(): Promise<AppInfo>
         createBackup(): Promise<BackupResult>
         showData(): Promise<void>
+        copyDiagnostics(details: string): Promise<void>
+        openFeedback(details: string): Promise<void>
         onUpdated(listener: (preferences: AppPreferences) => void): () => void
       }
       widget: {

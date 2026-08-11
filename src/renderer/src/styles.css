@@ -1995,6 +1995,95 @@ p {
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
+.feedback-panel {
+  display: grid;
+  gap: 18px;
+  padding: 23px;
+  border: 1px solid #302e28;
+  background: #0f0f0d;
+}
+.feedback-panel > p {
+  max-width: 620px;
+  margin: 0;
+  color: #858178;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.feedback-kind-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.feedback-kind,
+.settings-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #35332d;
+  border-radius: 0;
+  padding: 10px 12px;
+  background: transparent;
+  color: #77736a;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+.feedback-kind:hover,
+.feedback-kind.selected,
+.settings-secondary:hover {
+  border-color: #a48345;
+  color: #d4bd8b;
+}
+.feedback-kind.selected {
+  background: #1b1811;
+}
+.feedback-textarea {
+  width: 100%;
+  min-height: 124px;
+  resize: vertical;
+  border: 1px solid #35332d;
+  border-radius: 0;
+  padding: 14px;
+  outline: 0;
+  background: #11110f;
+  color: #ebe5da;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.feedback-textarea:focus {
+  border-color: #a48345;
+}
+.feedback-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.feedback-actions .settings-primary,
+.feedback-actions .settings-secondary {
+  min-width: 0;
+}
+[data-theme] .feedback-panel,
+[data-theme] .feedback-textarea {
+  background: var(--theme-surface);
+}
+[data-theme] .feedback-kind,
+[data-theme] .settings-secondary {
+  border-color: var(--theme-line);
+}
+[data-theme] .feedback-kind:hover,
+[data-theme] .feedback-kind.selected,
+[data-theme] .settings-secondary:hover,
+[data-theme] .feedback-textarea:focus {
+  border-color: var(--theme-accent);
+}
+[data-theme] .feedback-kind.selected {
+  background: var(--theme-surface-raised);
+}
+[data-theme] :is(.feedback-panel > p, .feedback-kind, .settings-secondary, .feedback-textarea) {
+  color: var(--theme-muted);
+}
 .settings-footer {
   display: flex;
   align-items: center;
@@ -2042,7 +2131,8 @@ p {
 [data-theme] .reflection textarea,
 [data-theme] .library-categories > div:last-child,
 [data-theme] .settings-select .select-trigger,
-[data-theme] .backup-panel {
+[data-theme] .backup-panel,
+[data-theme] .feedback-panel {
   background: var(--theme-surface);
 }
 [data-theme] .sidebar button.active,
