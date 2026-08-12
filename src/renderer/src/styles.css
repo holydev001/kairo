@@ -2182,6 +2182,44 @@ p {
 .feedback-actions .settings-secondary {
   min-width: 0;
 }
+.update-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 23px;
+  border: 1px solid #302e28;
+  background: #0f0f0d;
+}
+.update-panel h3 {
+  margin: 7px 0 5px;
+  font-family: 'Instrument Serif';
+  font-size: 22px;
+  font-weight: 400;
+}
+.update-panel p:not(.eyebrow) {
+  max-width: 570px;
+  margin: 0;
+  color: #858178;
+  font-size: 11px;
+  line-height: 1.6;
+}
+.update-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+@media (max-width: 720px) {
+  .update-panel {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+[data-theme] .update-panel {
+  border-color: var(--theme-line);
+  background: var(--theme-surface);
+}
 [data-theme] .feedback-panel,
 [data-theme] .feedback-textarea {
   background: var(--theme-surface);

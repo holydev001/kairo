@@ -5,6 +5,7 @@ import {
   ChevronDown,
   Copy,
   Download,
+  DownloadCloud,
   ExternalLink,
   FolderOpen,
   HardDrive,
@@ -12,6 +13,7 @@ import {
   Lightbulb,
   LoaderCircle,
   Monitor,
+  RefreshCw,
   MessageSquareWarning,
   MoonStar,
   ShieldCheck,
@@ -19,7 +21,13 @@ import {
   Sun,
   UserRound
 } from 'lucide-react'
-import type { AppInfo, AppPreferences, AppTheme, LaunchView } from '../../shared/settings'
+import type {
+  AppInfo,
+  AppPreferences,
+  AppTheme,
+  LaunchView,
+  UpdateState
+} from '../../shared/settings'
 
 const launchViewLabels: Record<LaunchView, string> = {
   command: 'Command Center',
@@ -103,6 +111,7 @@ export function SettingsView({
   const [feedbackState, setFeedbackState] = useState<
     'idle' | 'working' | 'copied' | 'opened' | 'error'
   >('idle')
+  const [updateState, setUpdateState] = useState<UpdateState>({ status: 'idle' })
 
   useEffect(() => {
     if (hidden || info) return
@@ -111,6 +120,15 @@ export function SettingsView({
       .then(setInfo)
       .catch(() => setBackupState('error'))
   }, [hidden, info])
+
+  useEffect(() => {
+    if (hidden) return
+    void window.kairo.update
+      .getState()
+      .then(setUpdateState)
+      .catch(() => undefined)
+    return window.kairo.update.onState(setUpdateState)
+  }, [hidden])
 
   useEffect(() => {
     if (!hydrated) return
@@ -154,6 +172,28 @@ export function SettingsView({
         minute: '2-digit'
       }).format(new Date(preferences.lastBackupAt))
     : 'No backup created yet'
+
+  const checkForUpdates = async (): Promise<void> => {
+    setUpdateState({ status: 'checking' })
+    await window.kairo.update.check()
+  }
+
+  const updateLabel =
+    updateState.status === 'checking'
+      ? 'Checking for updates'
+      : updateState.status === 'downloading'
+        ? `Downloading update · ${updateState.percent}%`
+        : updateState.status === 'downloaded'
+          ? `Kairo ${updateState.version} is ready`
+          : updateState.status === 'available'
+            ? `Kairo ${updateState.version} is available`
+            : updateState.status === 'up-to-date'
+              ? 'Kairo is up to date'
+              : updateState.status === 'unsupported'
+                ? 'Updates are available in packaged Windows builds'
+                : updateState.status === 'error'
+                  ? updateState.message
+                  : 'Check for a newer beta build'
 
   const feedbackDetails = (): string => {
     const version = info?.version ?? 'unknown'
@@ -406,6 +446,57 @@ export function SettingsView({
             {feedbackState === 'opened' && 'GitHub opened with a prepared issue draft.'}
             {feedbackState === 'error' && 'Kairo could not prepare the feedback report.'}
           </p>
+        </div>
+      </section>
+
+      <section className="settings-section update-section">
+        <div className="settings-section-heading">
+          <DownloadCloud size={18} />
+          <div>
+            <p className="eyebrow">KAIRO UPDATES</p>
+            <h2>Stay current without reinstalling by hand.</h2>
+          </div>
+        </div>
+        <div className="update-panel">
+          <div>
+            <p className="eyebrow">BETA CHANNEL</p>
+            <h3>{updateLabel}</h3>
+            <p>
+              Updates are checked against Kairo&apos;s public GitHub Releases. Nothing downloads
+              without your approval.
+            </p>
+          </div>
+          <div className="update-actions">
+            {updateState.status === 'available' && (
+              <button
+                className="settings-primary"
+                type="button"
+                onClick={() => void window.kairo.update.download()}
+              >
+                <Download size={15} /> Download update
+              </button>
+            )}
+            {updateState.status === 'downloaded' && (
+              <button
+                className="settings-primary"
+                type="button"
+                onClick={() => void window.kairo.update.install()}
+              >
+                <RefreshCw size={15} /> Restart to update
+              </button>
+            )}
+            {(updateState.status === 'idle' ||
+              updateState.status === 'up-to-date' ||
+              updateState.status === 'error') && (
+              <button
+                className="settings-secondary"
+                type="button"
+                onClick={() => void checkForUpdates()}
+              >
+                <RefreshCw size={14} /> Check now
+              </button>
+            )}
+          </div>
         </div>
       </section>
 
