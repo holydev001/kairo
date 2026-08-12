@@ -21,6 +21,15 @@ export const commitmentCategorySchema = z.object({
   commitments: z.array(commitmentSchema).max(24)
 })
 
+export const readingLogSchema = z.object({
+  book: z.string().max(160),
+  pages: z.number().int().min(0).max(10000),
+  minutes: z.number().int().min(0).max(1440),
+  takeaway: z.string().max(1200)
+})
+
+export type ReadingLog = z.infer<typeof readingLogSchema>
+
 export type CommitmentCategory = z.infer<typeof commitmentCategorySchema>
 export type Commitment = z.infer<typeof commitmentSchema>
 export const commitmentTemplatesSchema = z.array(commitmentCategorySchema).max(16)
@@ -85,6 +94,7 @@ const dailyEntryBaseSchema = z.object({
   reflection: z.string().max(2000),
   gratitude: z.string().max(1000),
   notes: z.string().max(2000).default(''),
+  reading: readingLogSchema.default({ book: '', pages: 0, minutes: 0, takeaway: '' }),
   updatedAt: z.string()
 })
 
@@ -144,6 +154,7 @@ export function createEmptyEntry(
     reflection: '',
     gratitude: '',
     notes: '',
+    reading: { book: '', pages: 0, minutes: 0, takeaway: '' },
     updatedAt: new Date().toISOString()
   }
 }
