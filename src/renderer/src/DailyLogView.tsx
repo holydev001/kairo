@@ -208,6 +208,77 @@ export function DailyLogView({ hidden }: { hidden: boolean }): React.JSX.Element
           maxLength={2000}
         />
       </section>
+
+      <section className="daily-log-reading">
+        <div>
+          <span>07 · READING</span>
+          <h2>Keep learning in small pages.</h2>
+          <p>Record what you read without turning the habit into a performance.</p>
+        </div>
+        <div className="daily-log-reading-fields">
+          <label>
+            <span>BOOK OR TEXT</span>
+            <input
+              value={entry.reading.book}
+              onChange={(event) =>
+                setEntry({ ...entry, reading: { ...entry.reading, book: event.target.value } })
+              }
+              placeholder="What did you read?"
+              maxLength={160}
+            />
+          </label>
+          <label>
+            <span>PAGES</span>
+            <input
+              type="number"
+              min="0"
+              max="10000"
+              value={entry.reading.pages || ''}
+              onChange={(event) =>
+                setEntry({
+                  ...entry,
+                  reading: { ...entry.reading, pages: Math.max(0, Number(event.target.value) || 0) }
+                })
+              }
+              placeholder="0"
+            />
+          </label>
+          <label>
+            <span>MINUTES</span>
+            <input
+              type="number"
+              min="0"
+              max="1440"
+              value={entry.reading.minutes || ''}
+              onChange={(event) =>
+                setEntry({
+                  ...entry,
+                  reading: {
+                    ...entry.reading,
+                    minutes: Math.max(0, Number(event.target.value) || 0)
+                  }
+                })
+              }
+              placeholder="0"
+            />
+          </label>
+          <label className="daily-log-reading-takeaway">
+            <span>TAKEAWAY</span>
+            <textarea
+              value={entry.reading.takeaway}
+              onChange={(event) =>
+                setEntry({
+                  ...entry,
+                  reading: { ...entry.reading, takeaway: event.target.value }
+                })
+              }
+              placeholder="What stayed with you?"
+              maxLength={1200}
+              rows={3}
+            />
+          </label>
+        </div>
+      </section>
     </div>
   )
 }
