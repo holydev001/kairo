@@ -91,6 +91,16 @@ export type AppInfo = {
   dataPath: string
 }
 
+export type UpdateState =
+  | { status: 'idle' }
+  | { status: 'checking' }
+  | { status: 'available'; version: string; releaseDate?: string }
+  | { status: 'downloading'; version: string; percent: number }
+  | { status: 'downloaded'; version: string }
+  | { status: 'up-to-date'; version: string }
+  | { status: 'unsupported' }
+  | { status: 'error'; message: string }
+
 export function createDefaultPreferences(): AppPreferences {
   return {
     preferredName: '',
