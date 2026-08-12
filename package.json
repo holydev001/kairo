@@ -33,6 +33,7 @@
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.6",
     "@fontsource/instrument-serif": "^5.2.5",
+    "electron-updater": "^6.8.9",
     "koffi": "^3.1.4",
     "lucide-react": "^0.468.0",
     "react": "^19.0.0",

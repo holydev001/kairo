@@ -1,5 +1,6 @@
 import { join } from 'node:path'
 import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell } from 'electron'
+import { autoUpdater } from 'electron-updater'
 import type {
   AppTheme,
   BackupResult,
@@ -7,11 +8,14 @@ import type {
   WidgetKind,
   WidgetPreferences
 } from '../shared/settings'
+import type { UpdateState } from '../shared/settings'
 import { JournalDatabase } from './database'
 import { excludeWindowFromDesktopPeek } from './windows-peek'
 
 let journal: JournalDatabase
 let mainWindow: BrowserWindow | null = null
+let updateState: UpdateState = { status: 'idle' }
+let availableUpdateVersion = app.getVersion()
 const widgetWindows: Record<WidgetKind, BrowserWindow | null> = {
   checklist: null,
   quote: null
@@ -76,6 +80,47 @@ function syncLoginLaunch(): void {
     args: ['--widget-background'],
     name: 'Kairo Widgets'
   })
+}
+
+function broadcastUpdateState(state: UpdateState): void {
+  updateState = state
+  if (!mainWindow || mainWindow.isDestroyed()) return
+  mainWindow.webContents.send('update:state', state)
+}
+
+function configureAutoUpdater(): void {
+  if (!app.isPackaged || process.platform !== 'win32') {
+    broadcastUpdateState({ status: 'unsupported' })
+    return
+  }
+  autoUpdater.autoDownload = false
+  autoUpdater.autoInstallOnAppQuit = false
+  autoUpdater.allowPrerelease = app.getVersion().includes('-')
+  autoUpdater.on('checking-for-update', () => broadcastUpdateState({ status: 'checking' }))
+  autoUpdater.on('update-not-available', () =>
+    broadcastUpdateState({ status: 'up-to-date', version: app.getVersion() })
+  )
+  autoUpdater.on('update-available', (info) => {
+    availableUpdateVersion = info.version
+    broadcastUpdateState({
+      status: 'available',
+      version: info.version,
+      releaseDate: info.releaseDate
+    })
+  })
+  autoUpdater.on('download-progress', (progress) => {
+    broadcastUpdateState({
+      status: 'downloading',
+      version: availableUpdateVersion,
+      percent: Math.round(progress.percent)
+    })
+  })
+  autoUpdater.on('update-downloaded', (info) =>
+    broadcastUpdateState({ status: 'downloaded', version: info.version })
+  )
+  autoUpdater.on('error', (error) =>
+    broadcastUpdateState({ status: 'error', message: error.message || 'Update check failed.' })
+  )
 }
 
 function applyWidgetPreferences(
@@ -285,9 +330,41 @@ app.whenReady().then(async () => {
     url.searchParams.set('body', body)
     void shell.openExternal(url.toString())
   })
+  ipcMain.handle('update:state', () => updateState)
+  ipcMain.handle('update:check', async () => {
+    if (!app.isPackaged || process.platform !== 'win32') {
+      broadcastUpdateState({ status: 'unsupported' })
+      return updateState
+    }
+    try {
+      await autoUpdater.checkForUpdates()
+    } catch (error) {
+      broadcastUpdateState({
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Update check failed.'
+      })
+    }
+    return updateState
+  })
+  ipcMain.handle('update:download', async () => {
+    if (updateState.status !== 'available') return updateState
+    try {
+      await autoUpdater.downloadUpdate()
+    } catch (error) {
+      broadcastUpdateState({
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Update download failed.'
+      })
+    }
+    return updateState
+  })
+  ipcMain.handle('update:install', () => {
+    if (updateState.status === 'downloaded') autoUpdater.quitAndInstall()
+  })
   ipcMain.handle('widget:open', (_event, kind: WidgetKind) => createWidgetWindow(kind))
   ipcMain.handle('widget:close', (_event, kind: WidgetKind) => widgetWindows[kind]?.close())
   if (!backgroundLaunch) createWindow()
+  configureAutoUpdater()
   const preferences = journal.getPreferences()
   syncLoginLaunch()
   if (preferences.widget.alwaysOnDisplay) createWidgetWindow('checklist')

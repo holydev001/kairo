@@ -1,6 +1,12 @@
 import type { CommitmentCategory, DailyEntry } from '../../shared/journal'
 import type { WeeklyReview } from '../../shared/weekly-review'
-import type { AppInfo, AppPreferences, BackupResult, WidgetKind } from '../../shared/settings'
+import type {
+  AppInfo,
+  AppPreferences,
+  BackupResult,
+  UpdateState,
+  WidgetKind
+} from '../../shared/settings'
 
 declare global {
   interface Window {
@@ -33,6 +39,13 @@ declare global {
       widget: {
         open(kind: WidgetKind): Promise<void>
         close(kind: WidgetKind): Promise<void>
+      }
+      update: {
+        getState(): Promise<UpdateState>
+        check(): Promise<UpdateState>
+        download(): Promise<UpdateState>
+        install(): Promise<void>
+        onState(listener: (state: UpdateState) => void): () => void
       }
     }
   }

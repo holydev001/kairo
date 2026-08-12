@@ -1,7 +1,13 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { CommitmentCategory, DailyEntry } from '../shared/journal'
 import type { WeeklyReview } from '../shared/weekly-review'
-import type { AppInfo, AppPreferences, BackupResult, WidgetKind } from '../shared/settings'
+import type {
+  AppInfo,
+  AppPreferences,
+  BackupResult,
+  UpdateState,
+  WidgetKind
+} from '../shared/settings'
 
 contextBridge.exposeInMainWorld('kairo', {
   platform: process.platform,
@@ -43,6 +49,18 @@ contextBridge.exposeInMainWorld('kairo', {
         listener(preferences)
       ipcRenderer.on('settings:updated', handler)
       return () => ipcRenderer.removeListener('settings:updated', handler)
+    }
+  },
+  update: {
+    getState: (): Promise<UpdateState> => ipcRenderer.invoke('update:state'),
+    check: (): Promise<UpdateState> => ipcRenderer.invoke('update:check'),
+    download: (): Promise<UpdateState> => ipcRenderer.invoke('update:download'),
+    install: (): Promise<void> => ipcRenderer.invoke('update:install'),
+    onState: (listener: (state: UpdateState) => void): (() => void) => {
+      const handler = (_event: Electron.IpcRendererEvent, state: UpdateState): void =>
+        listener(state)
+      ipcRenderer.on('update:state', handler)
+      return () => ipcRenderer.removeListener('update:state', handler)
     }
   },
   widget: {
