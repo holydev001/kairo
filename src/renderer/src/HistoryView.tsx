@@ -172,6 +172,23 @@ export function HistoryView({ hidden }: { hidden: boolean }): React.JSX.Element 
                       <p className="eyebrow">EVENING REFLECTION</p>
                       <p>{entry.reflection || 'No reflection recorded.'}</p>
                     </section>
+                    {(entry.reading.book ||
+                      entry.reading.pages ||
+                      entry.reading.minutes ||
+                      entry.reading.takeaway) && (
+                      <section className="history-reading">
+                        <p className="eyebrow">READING</p>
+                        <div>
+                          <strong>{entry.reading.book || 'Reading session'}</strong>
+                          <span>
+                            {entry.reading.pages ? `${entry.reading.pages} pages` : ''}
+                            {entry.reading.pages && entry.reading.minutes ? ' · ' : ''}
+                            {entry.reading.minutes ? `${entry.reading.minutes} minutes` : ''}
+                          </span>
+                        </div>
+                        {entry.reading.takeaway && <p>{entry.reading.takeaway}</p>}
+                      </section>
+                    )}
                   </article>
                 )}
               </section>
