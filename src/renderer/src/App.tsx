@@ -31,6 +31,82 @@ import { WeeklyReviewView } from './WeeklyReviewView'
 import { SettingsView } from './SettingsView'
 import { WidgetStudio } from './WidgetStudio'
 
+type OnboardingProps = {
+  preferences: AppPreferences
+  onComplete(preferences: AppPreferences): void
+}
+
+function Onboarding({ preferences, onComplete }: OnboardingProps): React.JSX.Element {
+  const [name, setName] = useState(preferences.preferredName)
+  const [theme, setTheme] = useState<AppPreferences['theme']>(preferences.theme)
+
+  const begin = (): void => {
+    onComplete({
+      ...preferences,
+      preferredName: name.trim(),
+      theme,
+      onboardingCompleted: true,
+      launchView: 'command'
+    })
+  }
+
+  return (
+    <main className="onboarding-shell">
+      <div className="onboarding-orbit" aria-hidden="true" />
+      <section className="onboarding-card">
+        <div className="onboarding-mark" aria-hidden="true">
+          <span className="brand-frame" />
+          <span className="brand-glyph" lang="ja">
+            改
+          </span>
+          <i />
+        </div>
+        <p className="eyebrow">A PERSONAL COMMAND CENTER</p>
+        <h1>Stay aligned with the person you&apos;re becoming.</h1>
+        <p className="onboarding-copy">
+          Kairo is a quiet place to plan your days, keep your commitments, and notice the small
+          changes that add up.
+        </p>
+        <div className="onboarding-fields">
+          <label>
+            <span>WHAT SHOULD KAIRO CALL YOU?</span>
+            <input
+              autoFocus
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              onKeyDown={(event) => event.key === 'Enter' && begin()}
+              placeholder="Your name"
+              maxLength={60}
+            />
+          </label>
+          <div>
+            <span>CHOOSE YOUR ATMOSPHERE</span>
+            <div className="onboarding-themes" role="radiogroup" aria-label="Choose a theme">
+              {(['obsidian', 'ivory', 'midnight', 'ember', 'verdant'] as const).map((option) => (
+                <button
+                  key={option}
+                  className={theme === option ? 'selected' : ''}
+                  type="button"
+                  role="radio"
+                  aria-checked={theme === option}
+                  onClick={() => setTheme(option)}
+                >
+                  <i data-theme-swatch={option} />
+                  <span>{option}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <button className="onboarding-begin" type="button" onClick={begin}>
+          Begin your practice <span>→</span>
+        </button>
+        <p className="onboarding-note">You can change these choices anytime in Settings.</p>
+      </section>
+    </main>
+  )
+}
+
 const today = new Date().toISOString().slice(0, 10)
 
 function greeting(name: string): string {
@@ -70,6 +146,13 @@ export function App(): React.JSX.Element {
     categoryId: 'health'
   })
 
+  const completeOnboarding = (nextPreferences: AppPreferences): void => {
+    setPreferences(nextPreferences)
+    setPreferencesHydrated(true)
+    setActiveView('command')
+    void window.kairo.settings.save(nextPreferences)
+  }
+
   const completed = entry.priorities.filter((priority) => priority.completed).length
   const commitments = entry.commitmentCategories.flatMap((category) => category.commitments)
   const commitmentsCompleted = commitments.filter((commitment) => commitment.completed).length
@@ -88,7 +171,7 @@ export function App(): React.JSX.Element {
       .get()
       .then((value) => {
         setPreferences(value)
-        setActiveView(value.launchView)
+        setActiveView(value.onboardingCompleted ? value.launchView : 'command')
         setPreferencesHydrated(true)
       })
       .catch(() => setPreferencesHydrated(true))
@@ -229,6 +312,10 @@ export function App(): React.JSX.Element {
   const selectedCategoryName =
     entry.commitmentCategories.find((category) => category.id === draft.categoryId)?.name ??
     'Choose category'
+
+  if (preferencesHydrated && !preferences.onboardingCompleted) {
+    return <Onboarding preferences={preferences} onComplete={completeOnboarding} />
+  }
 
   return (
     <main className="shell">
