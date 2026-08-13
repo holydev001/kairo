@@ -1,6 +1,6 @@
 import { join } from 'node:path'
+import { createRequire } from 'node:module'
 import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell } from 'electron'
-import { autoUpdater } from 'electron-updater'
 import type {
   AppTheme,
   BackupResult,
@@ -11,6 +11,9 @@ import type {
 import type { UpdateState } from '../shared/settings'
 import { JournalDatabase } from './database'
 import { excludeWindowFromDesktopPeek } from './windows-peek'
+
+const require = createRequire(import.meta.url)
+const { autoUpdater } = require('electron-updater') as typeof import('electron-updater')
 
 let journal: JournalDatabase
 let mainWindow: BrowserWindow | null = null
