@@ -65,6 +65,8 @@ contextBridge.exposeInMainWorld('kairo', {
   },
   widget: {
     open: (kind: WidgetKind): Promise<void> => ipcRenderer.invoke('widget:open', kind),
-    close: (kind: WidgetKind): Promise<void> => ipcRenderer.invoke('widget:close', kind)
+    close: (kind: WidgetKind): Promise<void> => ipcRenderer.invoke('widget:close', kind),
+    saveQuoteImage: (dataUrl: string): Promise<{ status: 'cancelled' | 'saved'; path?: string }> =>
+      ipcRenderer.invoke('widget:save-quote-image', dataUrl)
   }
 })
