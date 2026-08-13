@@ -1,4 +1,5 @@
 import { join } from 'node:path'
+import { writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { app, BrowserWindow, clipboard, dialog, ipcMain, nativeImage, shell } from 'electron'
 import type {
@@ -366,6 +367,25 @@ app.whenReady().then(async () => {
   })
   ipcMain.handle('widget:open', (_event, kind: WidgetKind) => createWidgetWindow(kind))
   ipcMain.handle('widget:close', (_event, kind: WidgetKind) => widgetWindows[kind]?.close())
+  ipcMain.handle('widget:save-quote-image', async (_event, dataUrl: unknown) => {
+    if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/png;base64,'))
+      return { status: 'cancelled' as const }
+    const result = await dialog.showSaveDialog({
+      title: 'Save quote image',
+      defaultPath: join(
+        app.getPath('pictures'),
+        `kairo-quote-${new Date().toISOString().slice(0, 10)}.png`
+      ),
+      buttonLabel: 'Save image',
+      filters: [{ name: 'PNG image', extensions: ['png'] }]
+    })
+    if (result.canceled || !result.filePath) return { status: 'cancelled' as const }
+    writeFileSync(
+      result.filePath,
+      Buffer.from(dataUrl.slice('data:image/png;base64,'.length), 'base64')
+    )
+    return { status: 'saved' as const, path: result.filePath }
+  })
   if (!backgroundLaunch) createWindow()
   configureAutoUpdater()
   const preferences = journal.getPreferences()
