@@ -71,6 +71,7 @@ export function createDefaultQuoteWidgetPreferences(): QuoteWidgetPreferences {
 
 export const appPreferencesSchema = z.object({
   preferredName: z.string().trim().max(60),
+  onboardingCompleted: z.boolean().default(false),
   launchView: launchViewSchema,
   theme: themeSchema.default('obsidian'),
   widget: widgetPreferencesSchema.default(createDefaultWidgetPreferences),
@@ -104,6 +105,7 @@ export type UpdateState =
 export function createDefaultPreferences(): AppPreferences {
   return {
     preferredName: '',
+    onboardingCompleted: false,
     launchView: 'command',
     theme: 'obsidian',
     widget: createDefaultWidgetPreferences(),
