@@ -184,7 +184,7 @@ export function SettingsView({
       : updateState.status === 'downloading'
         ? `Downloading update · ${updateState.percent}%`
         : updateState.status === 'downloaded'
-          ? `Kairo ${updateState.version} is ready`
+          ? `Kairo ${updateState.version} is ready to install`
           : updateState.status === 'available'
             ? `Kairo ${updateState.version} is available`
             : updateState.status === 'up-to-date'
@@ -463,7 +463,7 @@ export function SettingsView({
             <h3>{updateLabel}</h3>
             <p>
               Updates are checked against Kairo&apos;s public GitHub Releases. Nothing downloads
-              without your approval.
+              without your approval, and installation happens quietly after Kairo relaunches.
             </p>
           </div>
           <div className="update-actions">
@@ -482,7 +482,7 @@ export function SettingsView({
                 type="button"
                 onClick={() => void window.kairo.update.install()}
               >
-                <RefreshCw size={15} /> Restart to update
+                <RefreshCw size={15} /> Install and relaunch
               </button>
             )}
             {(updateState.status === 'idle' ||
