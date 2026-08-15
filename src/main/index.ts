@@ -98,7 +98,7 @@ function configureAutoUpdater(): void {
     return
   }
   autoUpdater.autoDownload = false
-  autoUpdater.autoInstallOnAppQuit = false
+  autoUpdater.autoInstallOnAppQuit = true
   autoUpdater.allowPrerelease = app.getVersion().includes('-')
   autoUpdater.on('checking-for-update', () => broadcastUpdateState({ status: 'checking' }))
   autoUpdater.on('update-not-available', () =>
@@ -363,13 +363,14 @@ app.whenReady().then(async () => {
     return updateState
   })
   ipcMain.handle('update:install', () => {
-    if (updateState.status === 'downloaded') autoUpdater.quitAndInstall()
+    if (updateState.status === 'downloaded') autoUpdater.quitAndInstall(true, true)
   })
   ipcMain.handle('widget:open', (_event, kind: WidgetKind) => createWidgetWindow(kind))
   ipcMain.handle('widget:close', (_event, kind: WidgetKind) => widgetWindows[kind]?.close())
-  ipcMain.handle('widget:save-quote-image', async (_event, dataUrl: unknown) => {
-    if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/png;base64,'))
-      return { status: 'cancelled' as const }
+  ipcMain.handle('widget:save-quote-image', async (event) => {
+    const widgetWindow = BrowserWindow.fromWebContents(event.sender)
+    if (!widgetWindow || widgetWindow.isDestroyed()) return { status: 'cancelled' as const }
+    const image = await widgetWindow.capturePage()
     const result = await dialog.showSaveDialog({
       title: 'Save quote image',
       defaultPath: join(
@@ -380,10 +381,7 @@ app.whenReady().then(async () => {
       filters: [{ name: 'PNG image', extensions: ['png'] }]
     })
     if (result.canceled || !result.filePath) return { status: 'cancelled' as const }
-    writeFileSync(
-      result.filePath,
-      Buffer.from(dataUrl.slice('data:image/png;base64,'.length), 'base64')
-    )
+    writeFileSync(result.filePath, image.toPNG())
     return { status: 'saved' as const, path: result.filePath }
   })
   if (!backgroundLaunch) createWindow()
