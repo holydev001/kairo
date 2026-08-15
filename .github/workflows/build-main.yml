@@ -1,0 +1,55 @@
+name: Build main
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Build Windows artifact
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify source
+        run: pnpm check
+
+      - name: Build Windows installer
+        run: |
+          pnpm build
+          pnpm exec electron-builder --win --x64 --publish never
+
+      - name: Create checksum
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem release -Filter 'Kairo-Setup-*.exe' -File | Select-Object -First 1
+          $hash = (Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          "$hash  $($installer.Name)" | Set-Content release/SHA256SUMS.txt
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kairo-windows-main-${{ github.sha }}
+          path: |
+            release/Kairo-Setup-*.exe
+            release/Kairo-Setup-*.exe.blockmap
+            release/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
