@@ -92,6 +92,30 @@ function broadcastUpdateState(state: UpdateState): void {
   mainWindow.webContents.send('update:state', state)
 }
 
+function friendlyUpdateError(error: unknown, action: string): string {
+  const detail = error instanceof Error ? error.message : String(error)
+  const normalized = detail.toLowerCase()
+  console.warn(`[updater] ${action} failed`, detail)
+  if (normalized.includes('404') || normalized.includes('latest.yml')) {
+    return 'The latest beta is still being published. Try again in a moment.'
+  }
+  if (
+    normalized.includes('401') ||
+    normalized.includes('403') ||
+    normalized.includes('authentication')
+  ) {
+    return 'Kairo could not access the beta release. Check your connection and try again.'
+  }
+  if (
+    normalized.includes('enet') ||
+    normalized.includes('econn') ||
+    normalized.includes('network')
+  ) {
+    return 'Kairo could not reach GitHub. Check your connection and try again.'
+  }
+  return `${action} could not be completed. Try again in a moment.`
+}
+
 function configureAutoUpdater(): void {
   if (!app.isPackaged || process.platform !== 'win32') {
     broadcastUpdateState({ status: 'unsupported' })
@@ -123,7 +147,7 @@ function configureAutoUpdater(): void {
     broadcastUpdateState({ status: 'downloaded', version: info.version })
   )
   autoUpdater.on('error', (error) =>
-    broadcastUpdateState({ status: 'error', message: error.message || 'Update check failed.' })
+    broadcastUpdateState({ status: 'error', message: friendlyUpdateError(error, 'Update check') })
   )
 }
 
@@ -345,7 +369,7 @@ app.whenReady().then(async () => {
     } catch (error) {
       broadcastUpdateState({
         status: 'error',
-        message: error instanceof Error ? error.message : 'Update check failed.'
+        message: friendlyUpdateError(error, 'Update check')
       })
     }
     return updateState
@@ -357,7 +381,7 @@ app.whenReady().then(async () => {
     } catch (error) {
       broadcastUpdateState({
         status: 'error',
-        message: error instanceof Error ? error.message : 'Update download failed.'
+        message: friendlyUpdateError(error, 'Update download')
       })
     }
     return updateState
