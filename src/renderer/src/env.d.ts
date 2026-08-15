@@ -39,7 +39,7 @@ declare global {
       widget: {
         open(kind: WidgetKind): Promise<void>
         close(kind: WidgetKind): Promise<void>
-        saveQuoteImage(dataUrl: string): Promise<{ status: 'cancelled' | 'saved'; path?: string }>
+        saveQuoteImage(): Promise<{ status: 'cancelled' | 'saved'; path?: string }>
       }
       update: {
         getState(): Promise<UpdateState>

@@ -62,42 +62,7 @@ export function QuoteWidget(): React.JSX.Element {
     quote.attribution.trim() || (quote.mode === 'daily' ? `KAIRO · ${formattedDate()}` : '')
 
   const saveAsImage = (): void => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 1400
-    canvas.height = 900
-    const context = canvas.getContext('2d')
-    if (!context) return
-    const styles = getComputedStyle(document.documentElement)
-    context.fillStyle = styles.getPropertyValue('--theme-bg').trim() || '#0b0b0a'
-    context.fillRect(0, 0, canvas.width, canvas.height)
-    context.strokeStyle = styles.getPropertyValue('--theme-line').trim() || '#292823'
-    context.strokeRect(55, 55, canvas.width - 110, canvas.height - 110)
-    context.fillStyle = styles.getPropertyValue('--theme-accent').trim() || '#b89550'
-    context.font = '700 26px Arial'
-    context.fillText('改  KAIRO', 110, 150)
-    context.fillStyle = styles.getPropertyValue('--theme-muted').trim() || '#85827a'
-    context.font = '700 20px Arial'
-    context.fillText(label, 110, 225)
-    context.fillStyle = styles.getPropertyValue('--theme-text').trim() || '#eeeae0'
-    context.font = '400 48px Georgia'
-    const words = content.split(/\s+/)
-    const lines: string[] = []
-    let line = ''
-    for (const word of words) {
-      const candidate = line ? `${line} ${word}` : word
-      if (context.measureText(candidate).width > 1120 && line) {
-        lines.push(line)
-        line = word
-      } else line = candidate
-    }
-    if (line) lines.push(line)
-    lines.slice(0, 6).forEach((item, index) => context.fillText(item, 110, 350 + index * 68))
-    if (attribution) {
-      context.fillStyle = styles.getPropertyValue('--theme-muted').trim() || '#85827a'
-      context.font = '400 22px Arial'
-      context.fillText(attribution, 110, 790)
-    }
-    void window.kairo.widget.saveQuoteImage(canvas.toDataURL('image/png'))
+    void window.kairo.widget.saveQuoteImage()
   }
 
   return (
