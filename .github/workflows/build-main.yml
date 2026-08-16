@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   windows:
@@ -31,10 +31,27 @@ jobs:
       - name: Verify source
         run: pnpm check
 
+      - name: Determine beta version
+        id: version
+        shell: pwsh
+        run: |
+          git fetch --tags --force
+          $latest = git tag --list 'v*-beta.*' --sort=-version:refname | Select-Object -First 1
+          if (-not $latest) {
+            $next = '0.1.0-beta.1'
+          } else {
+            $match = [regex]::Match($latest, '^v(.+-beta\.)(\d+)$')
+            if (-not $match.Success) { throw "Could not parse latest beta tag: $latest" }
+            $next = "$($match.Groups[1].Value)$([int]$match.Groups[2].Value + 1)"
+          }
+          "version=$next" >> $env:GITHUB_OUTPUT
+          "tag=v$next" >> $env:GITHUB_OUTPUT
+          "Publishing Kairo v$next"
+
       - name: Build Windows installer
         run: |
           pnpm build
-          pnpm exec electron-builder --win --x64 --publish never
+          pnpm exec electron-builder --win --x64 --publish never --config.extraMetadata.version=${{ steps.version.outputs.version }}
 
       - name: Create checksum
         shell: pwsh
@@ -46,10 +63,29 @@ jobs:
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: kairo-windows-main-${{ github.sha }}
+          name: kairo-windows-${{ steps.version.outputs.tag }}
           path: |
             release/Kairo-Setup-*.exe
             release/Kairo-Setup-*.exe.blockmap
+            release/latest.yml
             release/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish beta release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = '${{ steps.version.outputs.tag }}'
+          $assets = @(
+            Get-ChildItem release -Filter 'Kairo-Setup-*.exe' -File
+            Get-ChildItem release -Filter 'Kairo-Setup-*.exe.blockmap' -File
+            Get-Item release/latest.yml
+            Get-Item release/SHA256SUMS.txt
+          )
+          gh release create $tag $assets.FullName `
+            --target $env:GITHUB_SHA `
+            --prerelease `
+            --generate-notes `
+            --title "Kairo $tag"
