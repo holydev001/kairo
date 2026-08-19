@@ -328,6 +328,9 @@ app.whenReady().then(async () => {
     version: app.getVersion(),
     dataPath: journal.getPath()
   }))
+  ipcMain.handle('settings:clear-data', () => {
+    journal.clearJournalData()
+  })
   ipcMain.handle('settings:create-backup', async (): Promise<BackupResult> => {
     const date = new Date().toISOString().slice(0, 10)
     const result = await dialog.showSaveDialog({

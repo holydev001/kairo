@@ -172,6 +172,15 @@ export class JournalDatabase {
     return templates
   }
 
+  clearJournalData(): void {
+    this.database.run(`
+      DELETE FROM daily_entries;
+      DELETE FROM weekly_reviews;
+      DELETE FROM app_settings WHERE key = 'commitment_templates';
+    `)
+    this.persist()
+  }
+
   getPreferences(): AppPreferences {
     const statement = this.database.prepare(
       "SELECT payload FROM app_settings WHERE key = 'preferences' LIMIT 1"
