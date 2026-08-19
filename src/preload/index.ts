@@ -38,6 +38,7 @@ contextBridge.exposeInMainWorld('kairo', {
     save: (preferences: AppPreferences): Promise<AppPreferences> =>
       ipcRenderer.invoke('settings:save', preferences),
     info: (): Promise<AppInfo> => ipcRenderer.invoke('settings:info'),
+    clearData: (): Promise<void> => ipcRenderer.invoke('settings:clear-data'),
     createBackup: (): Promise<BackupResult> => ipcRenderer.invoke('settings:create-backup'),
     showData: (): Promise<void> => ipcRenderer.invoke('settings:show-data'),
     copyDiagnostics: (details: string): Promise<void> =>

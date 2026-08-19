@@ -30,6 +30,7 @@ declare global {
         get(): Promise<AppPreferences>
         save(preferences: AppPreferences): Promise<AppPreferences>
         info(): Promise<AppInfo>
+        clearData(): Promise<void>
         createBackup(): Promise<BackupResult>
         showData(): Promise<void>
         copyDiagnostics(details: string): Promise<void>
