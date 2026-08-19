@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   Sprout,
   Sun,
+  Trash2,
   UserRound
 } from 'lucide-react'
 import type {
@@ -111,6 +112,8 @@ export function SettingsView({
   const [feedbackState, setFeedbackState] = useState<
     'idle' | 'working' | 'copied' | 'opened' | 'error'
   >('idle')
+  const [clearPhrase, setClearPhrase] = useState('')
+  const [clearState, setClearState] = useState<'idle' | 'working' | 'error'>('idle')
   const [updateState, setUpdateState] = useState<UpdateState>({ status: 'idle' })
 
   useEffect(() => {
@@ -160,6 +163,17 @@ export function SettingsView({
       setBackupState('saved')
     } catch {
       setBackupState('error')
+    }
+  }
+
+  const clearData = async (): Promise<void> => {
+    if (clearPhrase.trim().toUpperCase() !== 'CLEAR') return
+    setClearState('working')
+    try {
+      await window.kairo.settings.clearData()
+      window.location.reload()
+    } catch {
+      setClearState('error')
     }
   }
 
@@ -387,6 +401,49 @@ export function SettingsView({
           </span>
           <i>Reveal</i>
         </button>
+      </section>
+
+      <section className="settings-section danger-section">
+        <div className="settings-section-heading">
+          <Trash2 size={18} />
+          <div>
+            <p className="eyebrow">RESET JOURNAL DATA</p>
+            <h2>Start with a clean record.</h2>
+          </div>
+        </div>
+        <div className="danger-panel">
+          <div>
+            <p className="eyebrow">DESTRUCTIVE ACTION</p>
+            <h3>Clear previous entries.</h3>
+            <p>
+              Deletes daily journal entries, weekly reviews, and saved commitment templates. Your
+              name, theme, widgets, and Kairo settings will remain.
+            </p>
+          </div>
+          <div className="danger-controls">
+            <label>
+              <span>TYPE CLEAR TO CONFIRM</span>
+              <input
+                value={clearPhrase}
+                onChange={(event) => setClearPhrase(event.target.value)}
+                placeholder="CLEAR"
+                autoComplete="off"
+              />
+            </label>
+            <button
+              className="settings-danger"
+              type="button"
+              disabled={clearPhrase.trim().toUpperCase() !== 'CLEAR' || clearState === 'working'}
+              onClick={() => void clearData()}
+            >
+              {clearState === 'working' ? <LoaderCircle size={15} /> : <Trash2 size={15} />}
+              {clearState === 'working' ? 'Clearing data' : 'Clear all data'}
+            </button>
+          </div>
+          {clearState === 'error' && (
+            <p className="settings-message error">Kairo could not clear the journal data.</p>
+          )}
+        </div>
       </section>
 
       <section className="settings-section feedback-section">
