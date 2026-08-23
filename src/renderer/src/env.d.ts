@@ -1,5 +1,6 @@
 import type { CommitmentCategory, DailyEntry } from '../../shared/journal'
 import type { WeeklyReview } from '../../shared/weekly-review'
+import type { HabitStore } from '../../shared/habits'
 import type {
   AppInfo,
   AppPreferences,
@@ -25,6 +26,10 @@ declare global {
       commitments: {
         get(): Promise<CommitmentCategory[]>
         save(templates: CommitmentCategory[]): Promise<CommitmentCategory[]>
+      }
+      habits: {
+        get(): Promise<HabitStore>
+        save(habits: HabitStore): Promise<HabitStore>
       }
       settings: {
         get(): Promise<AppPreferences>
