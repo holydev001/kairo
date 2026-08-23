@@ -9,6 +9,7 @@ import {
   LoaderCircle,
   PanelsTopLeft,
   Plus,
+  Repeat2,
   Settings,
   Sparkles,
   Target,
@@ -27,6 +28,7 @@ import { CommitmentIcon } from './commitment-icons'
 import { CommitmentsView } from './CommitmentsView'
 import { DailyLogView } from './DailyLogView'
 import { HistoryView } from './HistoryView'
+import { HabitView } from './HabitView'
 import { WeeklyReviewView } from './WeeklyReviewView'
 import { SettingsView } from './SettingsView'
 import { WidgetStudio } from './WidgetStudio'
@@ -128,7 +130,9 @@ function thoughtForToday(): string {
 }
 
 export function App(): React.JSX.Element {
-  const [activeView, setActiveView] = useState<LaunchView | 'settings' | 'widget'>('command')
+  const [activeView, setActiveView] = useState<LaunchView | 'habits' | 'settings' | 'widget'>(
+    'command'
+  )
   const [preferences, setPreferences] = useState<AppPreferences>(createDefaultPreferences)
   const [preferencesHydrated, setPreferencesHydrated] = useState(false)
   const [entry, setEntry] = useState<DailyEntry>(() => createEmptyEntry(today))
@@ -375,6 +379,13 @@ export function App(): React.JSX.Element {
           >
             <Sparkles size={17} />
             <span className="nav-label">Weekly Review</span>
+          </button>
+          <button
+            className={activeView === 'habits' ? 'active' : ''}
+            onClick={() => setActiveView('habits')}
+          >
+            <Repeat2 size={17} />
+            <span className="nav-label">Habits</span>
           </button>
         </nav>
         <div className="sidebar-footer-actions">
@@ -722,6 +733,7 @@ export function App(): React.JSX.Element {
         <CommitmentsView hidden={activeView !== 'commitments'} />
         <HistoryView hidden={activeView !== 'history'} />
         <WeeklyReviewView hidden={activeView !== 'weekly'} />
+        <HabitView hidden={activeView !== 'habits'} />
         <SettingsView
           hidden={activeView !== 'settings'}
           preferences={preferences}
