@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { CommitmentCategory, DailyEntry } from '../shared/journal'
 import type { WeeklyReview } from '../shared/weekly-review'
+import type { HabitStore } from '../shared/habits'
 import type {
   AppInfo,
   AppPreferences,
@@ -32,6 +33,10 @@ contextBridge.exposeInMainWorld('kairo', {
     get: (): Promise<CommitmentCategory[]> => ipcRenderer.invoke('commitments:get'),
     save: (templates: CommitmentCategory[]): Promise<CommitmentCategory[]> =>
       ipcRenderer.invoke('commitments:save', templates)
+  },
+  habits: {
+    get: (): Promise<HabitStore> => ipcRenderer.invoke('habits:get'),
+    save: (habits: HabitStore): Promise<HabitStore> => ipcRenderer.invoke('habits:save', habits)
   },
   settings: {
     get: (): Promise<AppPreferences> => ipcRenderer.invoke('settings:get'),

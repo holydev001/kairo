@@ -20,6 +20,7 @@ import {
   createDefaultPreferences,
   type AppPreferences
 } from '../shared/settings'
+import { createDefaultHabitStore, habitStoreSchema, type HabitStore } from '../shared/habits'
 
 const require = createRequire(import.meta.url)
 
@@ -179,6 +180,29 @@ export class JournalDatabase {
       DELETE FROM app_settings WHERE key = 'commitment_templates';
     `)
     this.persist()
+  }
+
+  getHabits(): HabitStore {
+    const statement = this.database.prepare(
+      "SELECT payload FROM app_settings WHERE key = 'habits' LIMIT 1"
+    )
+    const store = statement.step()
+      ? habitStoreSchema.parse(JSON.parse(String(statement.getAsObject().payload)))
+      : createDefaultHabitStore()
+    statement.free()
+    return store
+  }
+
+  saveHabits(value: unknown): HabitStore {
+    const store = habitStoreSchema.parse(value)
+    this.database.run(
+      `INSERT INTO app_settings (key, payload)
+       VALUES ('habits', :payload)
+       ON CONFLICT(key) DO UPDATE SET payload = excluded.payload`,
+      { ':payload': JSON.stringify(store) }
+    )
+    this.persist()
+    return store
   }
 
   getPreferences(): AppPreferences {

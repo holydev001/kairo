@@ -14,7 +14,24 @@ import { JournalDatabase } from './database'
 import { excludeWindowFromDesktopPeek } from './windows-peek'
 
 const require = createRequire(import.meta.url)
-const { autoUpdater } = require('electron-updater') as typeof import('electron-updater')
+type AutoUpdater = {
+  autoDownload: boolean
+  autoInstallOnAppQuit: boolean
+  allowPrerelease: boolean
+  on(event: 'checking-for-update', listener: () => void): void
+  on(event: 'update-not-available', listener: () => void): void
+  on(
+    event: 'update-available',
+    listener: (info: { version: string; releaseDate?: string }) => void
+  ): void
+  on(event: 'download-progress', listener: (progress: { percent: number }) => void): void
+  on(event: 'update-downloaded', listener: (info: { version: string }) => void): void
+  on(event: 'error', listener: (error: unknown) => void): void
+  checkForUpdates(): Promise<unknown>
+  downloadUpdate(): Promise<unknown>
+  quitAndInstall(isSilent?: boolean, isForceRunAfter?: boolean): void
+}
+const { autoUpdater } = require('electron-updater') as { autoUpdater: AutoUpdater }
 
 let journal: JournalDatabase
 let mainWindow: BrowserWindow | null = null
@@ -314,6 +331,8 @@ app.whenReady().then(async () => {
   ipcMain.handle('commitments:save', (_event, templates: unknown) =>
     journal.saveCommitmentTemplates(templates)
   )
+  ipcMain.handle('habits:get', () => journal.getHabits())
+  ipcMain.handle('habits:save', (_event, habits: unknown) => journal.saveHabits(habits))
   ipcMain.handle('settings:get', () => journal.getPreferences())
   ipcMain.handle('settings:save', (event, preferences: unknown) => {
     const saved = journal.savePreferences(preferences)
