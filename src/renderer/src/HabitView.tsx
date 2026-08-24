@@ -1,27 +1,46 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Circle, Plus, Target, Trash2, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Target, Trash2, X } from 'lucide-react'
 import { createDefaultHabitStore, type Habit, type HabitStore } from '../../shared/habits'
 import { commitmentIconNames } from './commitment-icon-library'
 import { CommitmentIcon } from './commitment-icons'
 
-const today = new Date().toISOString().slice(0, 10)
-
-function dateOffset(offset: number): string {
-  const date = new Date()
-  date.setDate(date.getDate() + offset)
-  return date.toISOString().slice(0, 10)
+function toDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
-function formatDay(date: string): string {
-  return new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(new Date(`${date}T12:00:00`))
+function moveDays(date: Date, amount: number): Date {
+  const next = new Date(date)
+  next.setDate(next.getDate() + amount)
+  return next
+}
+
+function startOfWeek(date: Date): Date {
+  const start = new Date(date)
+  const day = start.getDay()
+  start.setDate(start.getDate() - (day === 0 ? 6 : day - 1))
+  start.setHours(0, 0, 0, 0)
+  return start
+}
+
+function weekLabel(start: Date): string {
+  const end = moveDays(start, 6)
+  const format = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
+  return `${format.format(start)} – ${format.format(end)}`
+}
+
+function dayLabel(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(date)
 }
 
 type HabitViewProps = { hidden: boolean }
 
 export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
+  const today = new Date()
+  const todayKey = toDateKey(today)
   const [store, setStore] = useState<HabitStore>(createDefaultHabitStore)
   const [hydrated, setHydrated] = useState(false)
   const [showForm, setShowForm] = useState(false)
+  const [weekStart, setWeekStart] = useState(() => startOfWeek(today))
   const [draft, setDraft] = useState({
     title: '',
     identity: '',
@@ -30,8 +49,17 @@ export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
     reward: '',
     icon: 'target'
   })
-  const days = useMemo(() => Array.from({ length: 7 }, (_, index) => dateOffset(index - 6)), [])
-  const completedToday = store.habits.filter((habit) => store.completions[habit.id]?.[today]).length
+  const days = useMemo(
+    () => Array.from({ length: 7 }, (_, index) => moveDays(weekStart, index)),
+    [weekStart]
+  )
+  const totalPossible = store.habits.length * days.length
+  const totalCompleted = store.habits.reduce(
+    (total, habit) =>
+      total + days.filter((day) => store.completions[habit.id]?.[toDateKey(day)]).length,
+    0
+  )
+  const overall = totalPossible ? Math.round((totalCompleted / totalPossible) * 100) : 0
 
   useEffect(() => {
     void window.kairo.habits
@@ -49,7 +77,7 @@ export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
     return () => window.clearTimeout(timeout)
   }, [hydrated, store])
 
-  const toggleHabit = (habit: Habit, date = today): void => {
+  const toggleHabit = (habit: Habit, date: string): void => {
     setStore((current) => ({
       ...current,
       completions: {
@@ -92,19 +120,35 @@ export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
       <header className="habits-header">
         <div>
           <p className="eyebrow">THE PRACTICE</p>
-          <h1>Become the kind of person who does it.</h1>
-          <p>Design small actions around the identity you want to reinforce.</p>
+          <h1>Small actions, seen clearly.</h1>
+          <p>Mark the days you showed up. Nothing more is required.</p>
         </div>
         <div className="habits-header-progress">
-          <strong>{completedToday}</strong>
-          <span>/ {store.habits.length} today</span>
+          <strong>{overall}%</strong>
+          <span>this week</span>
         </div>
       </header>
 
       <div className="habits-toolbar">
-        <div>
-          <p className="eyebrow">DAILY PRACTICE</p>
-          <span>Make it obvious. Make it easy. Return tomorrow.</span>
+        <div className="habits-month-control">
+          <button
+            type="button"
+            onClick={() => setWeekStart((current) => moveDays(current, -7))}
+            aria-label="Previous week"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <div>
+            <p className="eyebrow">WEEK OF</p>
+            <strong>{weekLabel(weekStart)}</strong>
+          </div>
+          <button
+            type="button"
+            onClick={() => setWeekStart((current) => moveDays(current, 7))}
+            aria-label="Next week"
+          >
+            <ChevronRight size={16} />
+          </button>
         </div>
         <button className="primary-action" type="button" onClick={() => setShowForm(true)}>
           <Plus size={14} /> New habit
@@ -116,7 +160,7 @@ export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
           <div className="form-heading">
             <div>
               <p className="eyebrow">NEW HABIT</p>
-              <h2>Give the action a reason to exist.</h2>
+              <h2>What do you want to practice?</h2>
             </div>
             <button
               className="icon-action"
@@ -127,70 +171,75 @@ export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
               <X size={17} />
             </button>
           </div>
-          <div className="habit-form-fields">
+          <div className="habit-form-simple">
             <label>
               <span>HABIT</span>
               <input
                 autoFocus
                 value={draft.title}
                 onChange={(event) => setDraft({ ...draft, title: event.target.value })}
-                placeholder="Read ten pages"
+                placeholder="Read 20 pages"
                 maxLength={80}
               />
             </label>
-            <label>
-              <span>IDENTITY · WHO ARE YOU BECOMING?</span>
-              <input
-                value={draft.identity}
-                onChange={(event) => setDraft({ ...draft, identity: event.target.value })}
-                placeholder="A person who keeps learning"
-                maxLength={120}
-              />
-            </label>
-            <label>
-              <span>CUE · WHEN WILL IT HAPPEN?</span>
-              <input
-                value={draft.cue}
-                onChange={(event) => setDraft({ ...draft, cue: event.target.value })}
-                placeholder="After my morning coffee"
-                maxLength={160}
-              />
-            </label>
-            <label>
-              <span>TINY VERSION · WHAT IS THE SMALLEST START?</span>
-              <input
-                value={draft.tinyVersion}
-                onChange={(event) => setDraft({ ...draft, tinyVersion: event.target.value })}
-                placeholder="Open the book and read one page"
-                maxLength={160}
-              />
-            </label>
-            <label>
-              <span>REWARD · WHAT MAKES IT SATISFYING?</span>
-              <input
-                value={draft.reward}
-                onChange={(event) => setDraft({ ...draft, reward: event.target.value })}
-                placeholder="Mark it complete and feel the progress"
-                maxLength={160}
-              />
-            </label>
-          </div>
-          <div className="habit-icon-picker">
-            <p>CHOOSE AN ICON</p>
-            <div>
-              {commitmentIconNames.map((name) => (
-                <button
-                  className={draft.icon === name ? 'selected' : ''}
-                  type="button"
-                  key={name}
-                  onClick={() => setDraft({ ...draft, icon: name })}
-                  aria-label={`Use ${name} icon`}
-                >
-                  <CommitmentIcon name={name} size={17} />
-                </button>
-              ))}
+            <div className="habit-icon-picker">
+              <p>ICON</p>
+              <div>
+                {commitmentIconNames.map((name) => (
+                  <button
+                    className={draft.icon === name ? 'selected' : ''}
+                    type="button"
+                    key={name}
+                    onClick={() => setDraft({ ...draft, icon: name })}
+                    aria-label={`Use ${name} icon`}
+                  >
+                    <CommitmentIcon name={name} size={16} />
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
+          <details className="habit-details">
+            <summary>Optional context</summary>
+            <div className="habit-form-fields">
+              <label>
+                <span>IDENTITY · WHO ARE YOU BECOMING?</span>
+                <input
+                  value={draft.identity}
+                  onChange={(event) => setDraft({ ...draft, identity: event.target.value })}
+                  placeholder="A person who keeps learning"
+                  maxLength={120}
+                />
+              </label>
+              <label>
+                <span>CUE · WHEN WILL IT HAPPEN?</span>
+                <input
+                  value={draft.cue}
+                  onChange={(event) => setDraft({ ...draft, cue: event.target.value })}
+                  placeholder="After my morning coffee"
+                  maxLength={160}
+                />
+              </label>
+              <label>
+                <span>TINY VERSION · SMALLEST START</span>
+                <input
+                  value={draft.tinyVersion}
+                  onChange={(event) => setDraft({ ...draft, tinyVersion: event.target.value })}
+                  placeholder="Read one page"
+                  maxLength={160}
+                />
+              </label>
+              <label>
+                <span>REWARD</span>
+                <input
+                  value={draft.reward}
+                  onChange={(event) => setDraft({ ...draft, reward: event.target.value })}
+                  placeholder="Mark the day and move on"
+                  maxLength={160}
+                />
+              </label>
+            </div>
+          </details>
           <button
             className="form-confirm"
             type="button"
@@ -206,77 +255,60 @@ export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
         <section className="habits-empty">
           <Target size={20} />
           <h2>Start with one small practice.</h2>
-          <p>A habit is a vote for the person you are becoming. Keep the first one easy.</p>
+          <p>
+            Add only the habits that genuinely matter this week. You can always add another later.
+          </p>
         </section>
       ) : (
-        <div className="habit-list">
-          {store.habits.map((habit) => {
-            const completed = Boolean(store.completions[habit.id]?.[today])
-            return (
-              <article className={completed ? 'habit-card complete' : 'habit-card'} key={habit.id}>
-                <div className="habit-card-topline">
-                  <CommitmentIcon name={habit.icon} />
-                  <div className="habit-card-actions">
+        <section className="habit-ledger-wrap" aria-label="Weekly habit tracker">
+          <div className="habit-ledger-scroll">
+            <div className="habit-ledger habit-ledger-weekly">
+              <div className="habit-ledger-corner">HABITS</div>
+              {days.map((day) => (
+                <div className="habit-day-heading" key={toDateKey(day)}>
+                  <span>{dayLabel(day)}</span>
+                  <b>{day.getDate()}</b>
+                </div>
+              ))}
+              {store.habits.map((habit) => (
+                <div className="habit-ledger-row" key={habit.id}>
+                  <div className="habit-name-cell">
+                    <CommitmentIcon name={habit.icon} size={15} />
+                    <span title={habit.identity || undefined}>{habit.title}</span>
                     <button
                       type="button"
                       onClick={() => deleteHabit(habit.id)}
                       aria-label={`Delete ${habit.title}`}
                     >
-                      <Trash2 size={13} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toggleHabit(habit)}
-                      aria-label={`Complete ${habit.title} today`}
-                    >
-                      {completed ? <Check size={13} /> : <Circle size={17} />}
+                      <Trash2 size={12} />
                     </button>
                   </div>
-                </div>
-                <p className="eyebrow">IDENTITY</p>
-                <h2>{habit.title}</h2>
-                {habit.identity && <p className="habit-identity">{habit.identity}</p>}
-                <div className="habit-context">
-                  {habit.cue && (
-                    <span>
-                      <b>CUE</b>
-                      {habit.cue}
-                    </span>
-                  )}
-                  {habit.tinyVersion && (
-                    <span>
-                      <b>TINY VERSION</b>
-                      {habit.tinyVersion}
-                    </span>
-                  )}
-                  {habit.reward && (
-                    <span>
-                      <b>REWARD</b>
-                      {habit.reward}
-                    </span>
-                  )}
-                </div>
-                <div className="habit-week" aria-label="Last seven days">
-                  {days.map((date) => {
+                  {days.map((day) => {
+                    const date = toDateKey(day)
                     const done = Boolean(store.completions[habit.id]?.[date])
                     return (
                       <button
-                        className={done ? 'done' : ''}
+                        className={`habit-day-cell${done ? ' done' : ''}${date === todayKey ? ' today' : ''}`}
                         type="button"
                         key={date}
                         onClick={() => toggleHabit(habit, date)}
-                        aria-label={`${formatDay(date)} ${done ? 'completed' : 'not completed'}`}
+                        aria-label={`${habit.title}, ${date}, ${done ? 'complete' : 'incomplete'}`}
                       >
-                        <span>{formatDay(date)}</span>
                         <i />
                       </button>
                     )
                   })}
                 </div>
-              </article>
-            )
-          })}
-        </div>
+              ))}
+            </div>
+          </div>
+          <div className="habit-ledger-footer">
+            <span>Show up when you can. Missed days are information, not failure.</span>
+            <span>
+              <b>{totalCompleted}</b> of {totalPossible} days completed
+            </span>
+          </div>
+        </section>
       )}
     </div>
   )

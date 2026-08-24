@@ -4217,3 +4217,194 @@ html[data-widget-size='compact'] .widget-shell {
     flex-direction: column;
   }
 }
+
+/* Calm weekly habit ledger */
+.habits-month-control {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.habits-month-control button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--theme-line);
+  color: var(--theme-muted);
+  background: transparent;
+}
+.habits-month-control button:hover {
+  border-color: var(--theme-accent);
+  color: var(--theme-accent-strong);
+}
+.habits-month-control div {
+  min-width: 155px;
+}
+.habits-month-control strong {
+  color: var(--theme-text);
+  font-family: 'Instrument Serif';
+  font-size: 21px;
+  font-weight: 400;
+}
+.habit-form-simple {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.7fr) minmax(0, 1.3fr);
+  align-items: end;
+  gap: 26px;
+}
+.habit-details {
+  border-top: 1px solid var(--theme-line);
+  padding-top: 16px;
+}
+.habit-details summary {
+  width: fit-content;
+  cursor: pointer;
+  color: var(--theme-muted);
+  font-size: 11px;
+}
+.habit-details summary:hover {
+  color: var(--theme-accent-strong);
+}
+.habit-details .habit-form-fields {
+  margin-top: 18px;
+}
+.habit-ledger-wrap {
+  border: 1px solid var(--theme-line);
+  background: var(--theme-surface);
+}
+.habit-ledger-scroll {
+  overflow-x: auto;
+}
+.habit-ledger-weekly {
+  grid-template-columns: minmax(190px, 1.5fr) repeat(7, minmax(44px, 1fr));
+  min-width: 560px;
+}
+.habit-ledger-corner,
+.habit-day-heading {
+  border-bottom: 1px solid var(--theme-line);
+  color: var(--theme-muted);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+}
+.habit-ledger-corner {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  padding: 17px 18px;
+  background: var(--theme-surface);
+}
+.habit-day-heading {
+  display: grid;
+  place-items: center;
+  gap: 3px;
+  padding: 13px 0;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.habit-day-heading b {
+  color: var(--theme-text);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.habit-ledger-row {
+  display: contents;
+}
+.habit-name-cell {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  border-bottom: 1px solid var(--theme-line);
+  padding: 12px 10px 12px 18px;
+  color: var(--theme-text);
+  background: var(--theme-surface);
+  font-size: 12px;
+}
+.habit-name-cell > svg {
+  flex: 0 0 auto;
+  color: var(--theme-accent-strong);
+}
+.habit-name-cell span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.habit-name-cell button {
+  display: grid;
+  place-items: center;
+  margin-left: auto;
+  border: 0;
+  color: var(--theme-faint);
+  background: transparent;
+  opacity: 0;
+}
+.habit-name-cell:hover button,
+.habit-name-cell button:focus-visible {
+  opacity: 1;
+}
+.habit-name-cell button:hover {
+  color: var(--theme-danger);
+}
+.habit-day-cell {
+  display: grid;
+  place-items: center;
+  min-height: 47px;
+  border: 0;
+  border-bottom: 1px solid var(--theme-line);
+  border-left: 1px solid color-mix(in srgb, var(--theme-line) 65%, transparent);
+  background: transparent;
+}
+.habit-day-cell i {
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--theme-line);
+  border-radius: 50%;
+}
+.habit-day-cell:hover i {
+  border-color: var(--theme-accent);
+}
+.habit-day-cell.done i {
+  border-color: var(--theme-accent);
+  background: var(--theme-accent);
+}
+.habit-day-cell.today {
+  background: color-mix(in srgb, var(--theme-accent) 8%, transparent);
+}
+.habit-day-cell.today i {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-accent) 22%, transparent);
+}
+.habit-day-cell.today.done i {
+  box-shadow: none;
+}
+.habit-ledger-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 15px 18px;
+  color: var(--theme-muted);
+  font-size: 10px;
+}
+.habit-ledger-footer b {
+  color: var(--theme-accent-strong);
+  font-weight: 500;
+}
+@media (max-width: 600px) {
+  .habit-form-simple {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .habit-ledger-weekly {
+    min-width: 500px;
+    grid-template-columns: minmax(150px, 1.3fr) repeat(7, minmax(40px, 1fr));
+  }
+  .habit-ledger-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
