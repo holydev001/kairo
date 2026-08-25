@@ -11,7 +11,7 @@ import type {
 } from '../shared/settings'
 import type { UpdateState } from '../shared/settings'
 import { JournalDatabase } from './database'
-import { excludeWindowFromDesktopPeek } from './windows-peek'
+import { excludeWindowFromDesktopPeek, setWindowDesktopLayer } from './windows-peek'
 
 const require = createRequire(import.meta.url)
 type AutoUpdater = {
@@ -42,7 +42,12 @@ const widgetWindows: Record<WidgetKind, BrowserWindow | null> = {
   quote: null
 }
 const widgetTopLevels: Partial<Record<WidgetKind, 'none' | 'floating' | 'screen-saver'>> = {}
+const widgetDesktopLayers: Partial<Record<WidgetKind, boolean>> = {}
+const widgetClosing: Partial<Record<WidgetKind, boolean>> = {}
+const widgetPositionTimers: Partial<Record<WidgetKind, NodeJS.Timeout>> = {}
+const widgetVisibilityTimers: Partial<Record<WidgetKind, NodeJS.Timeout>> = {}
 const backgroundLaunch = process.argv.includes('--widget-background')
+let appQuitting = false
 
 app.setName('Kairo')
 app.setAppUserModelId('dev.holydev.kairo')
@@ -89,6 +94,41 @@ function applyWindowTheme(theme: AppTheme): void {
 }
 
 type WindowPreferences = WidgetPreferences | QuoteWidgetPreferences
+
+function widgetPreferencesKey(kind: WidgetKind): 'widget' | 'quoteWidget' {
+  return kind === 'checklist' ? 'widget' : 'quoteWidget'
+}
+
+function saveWidgetRuntime(kind: WidgetKind, patch: Partial<WindowPreferences>): void {
+  const preferences = journal.getPreferences()
+  const key = widgetPreferencesKey(kind)
+  journal.savePreferences({ ...preferences, [key]: { ...preferences[key], ...patch } })
+}
+
+function rememberWidgetPosition(kind: WidgetKind): void {
+  const widgetWindow = widgetWindows[kind]
+  if (!widgetWindow || widgetWindow.isDestroyed()) return
+  if (widgetPositionTimers[kind]) clearTimeout(widgetPositionTimers[kind])
+  widgetPositionTimers[kind] = setTimeout(() => {
+    const [x, y] = widgetWindow.getPosition()
+    saveWidgetRuntime(kind, { position: { x, y }, open: true })
+    delete widgetPositionTimers[kind]
+  }, 180)
+}
+
+function keepDesktopWidgetVisible(kind: WidgetKind): void {
+  if (widgetVisibilityTimers[kind]) clearInterval(widgetVisibilityTimers[kind])
+  widgetVisibilityTimers[kind] = setInterval(() => {
+    const widgetWindow = widgetWindows[kind]
+    if (!widgetWindow || widgetWindow.isDestroyed() || appQuitting) return
+    const preferences = journal.getPreferences()[widgetPreferencesKey(kind)]
+    if (preferences.alwaysOnDisplay && !preferences.alwaysOnTop && !widgetWindow.isVisible()) {
+      // Windows+D hides ordinary windows as part of the show-desktop animation.
+      // Re-showing without activation keeps the widget on the desktop layer.
+      widgetWindow.showInactive()
+    }
+  }, 250)
+}
 
 function syncLoginLaunch(): void {
   if (process.platform !== 'win32' || !app.isPackaged) return
@@ -176,12 +216,16 @@ function applyWidgetPreferences(
   const widgetWindow = widgetWindows[kind]
   if (!widgetWindow || widgetWindow.isDestroyed()) return
   const [width, height] = widgetSizes[kind][preferences.size]
-  const staysVisible = preferences.alwaysOnDisplay || preferences.alwaysOnTop
-  const topLevel = preferences.alwaysOnDisplay
-    ? 'screen-saver'
-    : preferences.alwaysOnTop
-      ? 'floating'
-      : 'none'
+  // "Always on desktop" is intentionally a normal window: it belongs to the
+  // desktop layer and must never float above another application. Only the
+  // explicit "Display over all windows" setting enables topmost behavior.
+  const staysVisible = preferences.alwaysOnTop
+  const topLevel = preferences.alwaysOnTop ? 'floating' : 'none'
+  const desktopLayer = preferences.alwaysOnDisplay && !preferences.alwaysOnTop
+  if (widgetDesktopLayers[kind] !== desktopLayer) {
+    setWindowDesktopLayer(widgetWindow.getNativeWindowHandle(), desktopLayer)
+    widgetDesktopLayers[kind] = desktopLayer
+  }
   if (widgetTopLevels[kind] !== topLevel) {
     widgetWindow.setAlwaysOnTop(staysVisible, topLevel === 'none' ? 'normal' : topLevel)
     widgetTopLevels[kind] = topLevel
@@ -266,9 +310,11 @@ function createWidgetWindow(kind: WidgetKind): void {
   const appPreferences = journal.getPreferences()
   const preferences = kind === 'checklist' ? appPreferences.widget : appPreferences.quoteWidget
   const [width, height] = widgetSizes[kind][preferences.size]
+  const position = preferences.position ?? undefined
   widgetWindow = new BrowserWindow({
     width,
     height,
+    ...(position ? { x: position.x, y: position.y } : {}),
     minWidth: kind === 'checklist' ? 296 : 304,
     minHeight: kind === 'checklist' ? 384 : 240,
     maxWidth: 560,
@@ -277,7 +323,7 @@ function createWidgetWindow(kind: WidgetKind): void {
     thickFrame: false,
     transparent: process.platform !== 'win32',
     skipTaskbar: true,
-    alwaysOnTop: preferences.alwaysOnDisplay || preferences.alwaysOnTop,
+    alwaysOnTop: preferences.alwaysOnTop,
     maximizable: false,
     show: false,
     backgroundColor: '#00000000',
@@ -292,14 +338,36 @@ function createWidgetWindow(kind: WidgetKind): void {
     }
   })
   widgetWindows[kind] = widgetWindow
+  widgetClosing[kind] = false
+  saveWidgetRuntime(kind, { open: true })
+  if (preferences.alwaysOnDisplay) keepDesktopWidgetVisible(kind)
   if (process.platform === 'win32') {
     excludeWindowFromDesktopPeek(widgetWindow.getNativeWindowHandle())
   }
 
   applyWidgetPreferences(kind, preferences, false)
-  widgetWindow.once('ready-to-show', () => widgetWindows[kind]?.show())
+  widgetWindow.once('ready-to-show', () => {
+    const current = journal.getPreferences()[widgetPreferencesKey(kind)]
+    if (current.alwaysOnDisplay && !current.alwaysOnTop) widgetWindows[kind]?.showInactive()
+    else widgetWindows[kind]?.show()
+  })
+  widgetWindow.on('move', () => rememberWidgetPosition(kind))
+  widgetWindow.on('hide', () => {
+    const current = journal.getPreferences()[widgetPreferencesKey(kind)]
+    if (current.alwaysOnDisplay && !widgetClosing[kind] && !appQuitting) {
+      setTimeout(() => {
+        if (widgetWindows[kind] && !widgetWindows[kind]?.isDestroyed())
+          widgetWindows[kind]?.showInactive()
+      }, 30)
+    }
+  })
   widgetWindow.on('closed', () => {
+    if (!widgetClosing[kind]) rememberWidgetPosition(kind)
     delete widgetTopLevels[kind]
+    delete widgetDesktopLayers[kind]
+    if (widgetVisibilityTimers[kind]) clearInterval(widgetVisibilityTimers[kind])
+    delete widgetVisibilityTimers[kind]
+    delete widgetClosing[kind]
     widgetWindows[kind] = null
   })
 
@@ -337,6 +405,17 @@ app.whenReady().then(async () => {
   ipcMain.handle('settings:save', (event, preferences: unknown) => {
     const saved = journal.savePreferences(preferences)
     applyWindowTheme(saved.theme)
+    if (saved.widget.alwaysOnDisplay && widgetWindows.checklist)
+      keepDesktopWidgetVisible('checklist')
+    if (saved.quoteWidget.alwaysOnDisplay && widgetWindows.quote) keepDesktopWidgetVisible('quote')
+    if (!saved.widget.alwaysOnDisplay && widgetVisibilityTimers.checklist) {
+      clearInterval(widgetVisibilityTimers.checklist)
+      delete widgetVisibilityTimers.checklist
+    }
+    if (!saved.quoteWidget.alwaysOnDisplay && widgetVisibilityTimers.quote) {
+      clearInterval(widgetVisibilityTimers.quote)
+      delete widgetVisibilityTimers.quote
+    }
     applyWidgetPreferences('checklist', saved.widget)
     applyWidgetPreferences('quote', saved.quoteWidget)
     syncLoginLaunch()
@@ -412,11 +491,25 @@ app.whenReady().then(async () => {
     if (updateState.status === 'downloaded') autoUpdater.quitAndInstall(true, true)
   })
   ipcMain.handle('widget:open', (_event, kind: WidgetKind) => createWidgetWindow(kind))
-  ipcMain.handle('widget:close', (_event, kind: WidgetKind) => widgetWindows[kind]?.close())
+  ipcMain.handle('widget:close', (_event, kind: WidgetKind) => {
+    if (!widgetWindows[kind] || widgetWindows[kind]?.isDestroyed()) return
+    widgetClosing[kind] = true
+    saveWidgetRuntime(kind, { open: false })
+    widgetWindows[kind]?.close()
+  })
   ipcMain.handle('widget:save-quote-image', async (event) => {
     const widgetWindow = BrowserWindow.fromWebContents(event.sender)
     if (!widgetWindow || widgetWindow.isDestroyed()) return { status: 'cancelled' as const }
-    const image = await widgetWindow.capturePage()
+    const bounds = widgetWindow.getBounds()
+    const image = await widgetWindow.capturePage({
+      x: 0,
+      y: 0,
+      width: bounds.width,
+      height: bounds.height
+    })
+    // Export at one predictable, high-resolution width so repeated sharing does
+    // not create a progressively smaller or softer image.
+    const exportImage = image.resize({ width: 1600 })
     const result = await dialog.showSaveDialog({
       title: 'Save quote image',
       defaultPath: join(
@@ -427,15 +520,17 @@ app.whenReady().then(async () => {
       filters: [{ name: 'PNG image', extensions: ['png'] }]
     })
     if (result.canceled || !result.filePath) return { status: 'cancelled' as const }
-    writeFileSync(result.filePath, image.toPNG())
+    writeFileSync(result.filePath, exportImage.toPNG())
     return { status: 'saved' as const, path: result.filePath }
   })
   if (!backgroundLaunch) createWindow()
   configureAutoUpdater()
   const preferences = journal.getPreferences()
   syncLoginLaunch()
-  if (preferences.widget.alwaysOnDisplay) createWidgetWindow('checklist')
-  if (preferences.quoteWidget.alwaysOnDisplay) createWidgetWindow('quote')
+  // Restore only widgets that were open when Windows last shut down. A clean
+  // Kairo launch should never place a new widget in the middle of the screen.
+  if (preferences.widget.open) createWidgetWindow('checklist')
+  if (preferences.quoteWidget.open) createWidgetWindow('quote')
   app.on('activate', () => createWindow())
 })
 
@@ -444,4 +539,14 @@ app.on('window-all-closed', () => {
   if (!journal) return app.quit()
   const preferences = journal.getPreferences()
   if (!preferences.widget.alwaysOnDisplay && !preferences.quoteWidget.alwaysOnDisplay) app.quit()
+})
+
+app.on('before-quit', () => {
+  appQuitting = true
+  for (const kind of ['checklist', 'quote'] as const) {
+    const widgetWindow = widgetWindows[kind]
+    if (!widgetWindow || widgetWindow.isDestroyed()) continue
+    const [x, y] = widgetWindow.getPosition()
+    saveWidgetRuntime(kind, { open: true, position: { x, y } })
+  }
 })

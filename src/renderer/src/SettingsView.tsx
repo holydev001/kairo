@@ -30,13 +30,13 @@ import type {
   UpdateState
 } from '../../shared/settings'
 
-const launchViewLabels: Record<LaunchView, string> = {
+const launchViewLabels: Record<Exclude<LaunchView, 'commitments'>, string> = {
   command: 'Command Center',
   daily: 'Daily Log',
-  commitments: 'Commitments',
   history: 'History',
   weekly: 'Weekly Review'
 }
+const launchViews = Object.keys(launchViewLabels) as Array<Exclude<LaunchView, 'commitments'>>
 
 const themes: Array<{
   id: AppTheme
@@ -291,12 +291,16 @@ export function SettingsView({
                 aria-expanded={showLaunchMenu}
                 onClick={() => setShowLaunchMenu((current) => !current)}
               >
-                <span>{launchViewLabels[preferences.launchView]}</span>
+                <span>
+                  {preferences.launchView === 'commitments'
+                    ? 'Daily Log'
+                    : launchViewLabels[preferences.launchView]}
+                </span>
                 <ChevronDown size={15} />
               </button>
               {showLaunchMenu && (
                 <div className="select-menu" role="listbox" aria-label="Opening page">
-                  {(Object.keys(launchViewLabels) as LaunchView[]).map((view) => (
+                  {launchViews.map((view) => (
                     <button
                       className={preferences.launchView === view ? 'selected' : ''}
                       type="button"

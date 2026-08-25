@@ -64,10 +64,15 @@ export function WidgetStudio({
   const dimensions = activeWidget === 'checklist' ? checklistSizes : quoteSizes
 
   const updateAppearance = (patch: AppearancePatch): void => {
+    const normalizedPatch = patch.alwaysOnDisplay
+      ? { ...patch, alwaysOnTop: false }
+      : patch.alwaysOnTop
+        ? { ...patch, alwaysOnDisplay: false }
+        : patch
     if (activeWidget === 'checklist') {
-      onChange({ ...preferences, widget: { ...preferences.widget, ...patch } })
+      onChange({ ...preferences, widget: { ...preferences.widget, ...normalizedPatch } })
     } else {
-      onChange({ ...preferences, quoteWidget: { ...preferences.quoteWidget, ...patch } })
+      onChange({ ...preferences, quoteWidget: { ...preferences.quoteWidget, ...normalizedPatch } })
     }
   }
 
@@ -156,13 +161,13 @@ export function WidgetStudio({
             <div className="widget-toggles">
               <WidgetToggle
                 label="Always on desktop"
-                detail="Start quietly with Windows and keep this widget present on the desktop."
+                detail="Start with Windows, stay on the desktop layer, and never cover another app."
                 checked={widget.alwaysOnDisplay}
                 onChange={(checked) => updateAppearance({ alwaysOnDisplay: checked })}
               />
               <WidgetToggle
                 label="Display over all windows"
-                detail="Keep it floating above your other applications."
+                detail="Float above other applications until you turn this off."
                 checked={widget.alwaysOnTop}
                 onChange={(checked) => updateAppearance({ alwaysOnTop: checked })}
               />
@@ -366,7 +371,7 @@ function QuotePreview({ quote }: { quote: QuoteWidgetPreferences }): React.JSX.E
     quote.mode === 'scripture'
       ? 'SCRIPTURE'
       : quote.mode === 'custom'
-        ? 'PERSONAL WORD'
+        ? 'A WORD TO RETURN TO'
         : 'DAILY KAIZEN'
   return (
     <>
