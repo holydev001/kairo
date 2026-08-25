@@ -11,7 +11,7 @@ import type {
 } from '../shared/settings'
 import type { UpdateState } from '../shared/settings'
 import { JournalDatabase } from './database'
-import { excludeWindowFromDesktopPeek } from './windows-peek'
+import { excludeWindowFromDesktopPeek, setWindowDesktopLayer } from './windows-peek'
 
 const require = createRequire(import.meta.url)
 type AutoUpdater = {
@@ -42,6 +42,7 @@ const widgetWindows: Record<WidgetKind, BrowserWindow | null> = {
   quote: null
 }
 const widgetTopLevels: Partial<Record<WidgetKind, 'none' | 'floating' | 'screen-saver'>> = {}
+const widgetDesktopLayers: Partial<Record<WidgetKind, boolean>> = {}
 const widgetClosing: Partial<Record<WidgetKind, boolean>> = {}
 const widgetPositionTimers: Partial<Record<WidgetKind, NodeJS.Timeout>> = {}
 const widgetVisibilityTimers: Partial<Record<WidgetKind, NodeJS.Timeout>> = {}
@@ -220,6 +221,11 @@ function applyWidgetPreferences(
   // explicit "Display over all windows" setting enables topmost behavior.
   const staysVisible = preferences.alwaysOnTop
   const topLevel = preferences.alwaysOnTop ? 'floating' : 'none'
+  const desktopLayer = preferences.alwaysOnDisplay && !preferences.alwaysOnTop
+  if (widgetDesktopLayers[kind] !== desktopLayer) {
+    setWindowDesktopLayer(widgetWindow.getNativeWindowHandle(), desktopLayer)
+    widgetDesktopLayers[kind] = desktopLayer
+  }
   if (widgetTopLevels[kind] !== topLevel) {
     widgetWindow.setAlwaysOnTop(staysVisible, topLevel === 'none' ? 'normal' : topLevel)
     widgetTopLevels[kind] = topLevel
@@ -358,6 +364,7 @@ function createWidgetWindow(kind: WidgetKind): void {
   widgetWindow.on('closed', () => {
     if (!widgetClosing[kind]) rememberWidgetPosition(kind)
     delete widgetTopLevels[kind]
+    delete widgetDesktopLayers[kind]
     if (widgetVisibilityTimers[kind]) clearInterval(widgetVisibilityTimers[kind])
     delete widgetVisibilityTimers[kind]
     delete widgetClosing[kind]
@@ -398,8 +405,6 @@ app.whenReady().then(async () => {
   ipcMain.handle('settings:save', (event, preferences: unknown) => {
     const saved = journal.savePreferences(preferences)
     applyWindowTheme(saved.theme)
-    if (saved.widget.alwaysOnDisplay && !widgetWindows.checklist) createWidgetWindow('checklist')
-    if (saved.quoteWidget.alwaysOnDisplay && !widgetWindows.quote) createWidgetWindow('quote')
     if (saved.widget.alwaysOnDisplay && widgetWindows.checklist)
       keepDesktopWidgetVisible('checklist')
     if (saved.quoteWidget.alwaysOnDisplay && widgetWindows.quote) keepDesktopWidgetVisible('quote')
