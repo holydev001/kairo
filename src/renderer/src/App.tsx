@@ -12,7 +12,6 @@ import {
   Repeat2,
   Settings,
   Sparkles,
-  Target,
   Trash2,
   X
 } from 'lucide-react'
@@ -25,7 +24,6 @@ import {
 } from '../../shared/settings'
 import { commitmentIconNames } from './commitment-icon-library'
 import { CommitmentIcon } from './commitment-icons'
-import { CommitmentsView } from './CommitmentsView'
 import { DailyLogView } from './DailyLogView'
 import { HistoryView } from './HistoryView'
 import { HabitView } from './HabitView'
@@ -175,7 +173,13 @@ export function App(): React.JSX.Element {
       .get()
       .then((value) => {
         setPreferences(value)
-        setActiveView(value.onboardingCompleted ? value.launchView : 'command')
+        setActiveView(
+          value.onboardingCompleted
+            ? value.launchView === 'commitments'
+              ? 'daily'
+              : value.launchView
+            : 'command'
+        )
         setPreferencesHydrated(true)
       })
       .catch(() => setPreferencesHydrated(true))
@@ -358,13 +362,6 @@ export function App(): React.JSX.Element {
           >
             <Feather size={17} />
             <span className="nav-label">Daily Log</span>
-          </button>
-          <button
-            className={activeView === 'commitments' ? 'active' : ''}
-            onClick={() => setActiveView('commitments')}
-          >
-            <Target size={17} />
-            <span className="nav-label">Commitments</span>
           </button>
           <button
             className={activeView === 'history' ? 'active' : ''}
@@ -730,7 +727,6 @@ export function App(): React.JSX.Element {
           </section>
         </div>
         <DailyLogView hidden={activeView !== 'daily'} />
-        <CommitmentsView hidden={activeView !== 'commitments'} />
         <HistoryView hidden={activeView !== 'history'} />
         <WeeklyReviewView hidden={activeView !== 'weekly'} />
         <HabitView hidden={activeView !== 'habits'} />

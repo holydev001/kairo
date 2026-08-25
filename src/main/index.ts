@@ -44,6 +44,7 @@ const widgetWindows: Record<WidgetKind, BrowserWindow | null> = {
 const widgetTopLevels: Partial<Record<WidgetKind, 'none' | 'floating' | 'screen-saver'>> = {}
 const widgetClosing: Partial<Record<WidgetKind, boolean>> = {}
 const widgetPositionTimers: Partial<Record<WidgetKind, NodeJS.Timeout>> = {}
+const widgetVisibilityTimers: Partial<Record<WidgetKind, NodeJS.Timeout>> = {}
 const backgroundLaunch = process.argv.includes('--widget-background')
 let appQuitting = false
 
@@ -112,6 +113,20 @@ function rememberWidgetPosition(kind: WidgetKind): void {
     saveWidgetRuntime(kind, { position: { x, y }, open: true })
     delete widgetPositionTimers[kind]
   }, 180)
+}
+
+function keepDesktopWidgetVisible(kind: WidgetKind): void {
+  if (widgetVisibilityTimers[kind]) clearInterval(widgetVisibilityTimers[kind])
+  widgetVisibilityTimers[kind] = setInterval(() => {
+    const widgetWindow = widgetWindows[kind]
+    if (!widgetWindow || widgetWindow.isDestroyed() || appQuitting) return
+    const preferences = journal.getPreferences()[widgetPreferencesKey(kind)]
+    if (preferences.alwaysOnDisplay && !preferences.alwaysOnTop && !widgetWindow.isVisible()) {
+      // Windows+D hides ordinary windows as part of the show-desktop animation.
+      // Re-showing without activation keeps the widget on the desktop layer.
+      widgetWindow.showInactive()
+    }
+  }, 250)
 }
 
 function syncLoginLaunch(): void {
@@ -319,6 +334,7 @@ function createWidgetWindow(kind: WidgetKind): void {
   widgetWindows[kind] = widgetWindow
   widgetClosing[kind] = false
   saveWidgetRuntime(kind, { open: true })
+  if (preferences.alwaysOnDisplay) keepDesktopWidgetVisible(kind)
   if (process.platform === 'win32') {
     excludeWindowFromDesktopPeek(widgetWindow.getNativeWindowHandle())
   }
@@ -342,6 +358,8 @@ function createWidgetWindow(kind: WidgetKind): void {
   widgetWindow.on('closed', () => {
     if (!widgetClosing[kind]) rememberWidgetPosition(kind)
     delete widgetTopLevels[kind]
+    if (widgetVisibilityTimers[kind]) clearInterval(widgetVisibilityTimers[kind])
+    delete widgetVisibilityTimers[kind]
     delete widgetClosing[kind]
     widgetWindows[kind] = null
   })
@@ -382,6 +400,17 @@ app.whenReady().then(async () => {
     applyWindowTheme(saved.theme)
     if (saved.widget.alwaysOnDisplay && !widgetWindows.checklist) createWidgetWindow('checklist')
     if (saved.quoteWidget.alwaysOnDisplay && !widgetWindows.quote) createWidgetWindow('quote')
+    if (saved.widget.alwaysOnDisplay && widgetWindows.checklist)
+      keepDesktopWidgetVisible('checklist')
+    if (saved.quoteWidget.alwaysOnDisplay && widgetWindows.quote) keepDesktopWidgetVisible('quote')
+    if (!saved.widget.alwaysOnDisplay && widgetVisibilityTimers.checklist) {
+      clearInterval(widgetVisibilityTimers.checklist)
+      delete widgetVisibilityTimers.checklist
+    }
+    if (!saved.quoteWidget.alwaysOnDisplay && widgetVisibilityTimers.quote) {
+      clearInterval(widgetVisibilityTimers.quote)
+      delete widgetVisibilityTimers.quote
+    }
     applyWidgetPreferences('checklist', saved.widget)
     applyWidgetPreferences('quote', saved.quoteWidget)
     syncLoginLaunch()
