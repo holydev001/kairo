@@ -4,59 +4,59 @@ import { createDefaultHabitStore, type Habit, type HabitStore } from '../../shar
 import { commitmentIconNames } from './commitment-icon-library'
 import { CommitmentIcon } from './commitment-icons'
 
+const today = new Date()
+const todayKey = toDateKey(today)
+
 function toDateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 }
 
-function moveDays(date: Date, amount: number): Date {
-  const next = new Date(date)
-  next.setDate(next.getDate() + amount)
-  return next
+function monthKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
 }
 
-function startOfWeek(date: Date): Date {
-  const start = new Date(date)
-  const day = start.getDay()
-  start.setDate(start.getDate() - (day === 0 ? 6 : day - 1))
-  start.setHours(0, 0, 0, 0)
-  return start
+function daysInMonth(value: string): number {
+  const [year = '0', month = '1'] = value.split('-')
+  return new Date(Number(year), Number(month), 0).getDate()
 }
 
-function weekLabel(start: Date): string {
-  const end = moveDays(start, 6)
-  const format = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
-  return `${format.format(start)} – ${format.format(end)}`
+function monthLabel(value: string): string {
+  const [year = '0', month = '1'] = value.split('-')
+  return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(
+    new Date(Number(year), Number(month) - 1, 1)
+  )
 }
 
-function dayLabel(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(date)
+function dateForDay(month: string, day: number): string {
+  return `${month}-${String(day).padStart(2, '0')}`
 }
 
 type HabitViewProps = { hidden: boolean }
 
 export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
-  const today = new Date()
-  const todayKey = toDateKey(today)
   const [store, setStore] = useState<HabitStore>(createDefaultHabitStore)
   const [hydrated, setHydrated] = useState(false)
   const [showForm, setShowForm] = useState(false)
-  const [weekStart, setWeekStart] = useState(() => startOfWeek(today))
+  const [selectedMonth, setSelectedMonth] = useState(monthKey(today))
   const [draft, setDraft] = useState({
     title: '',
+    icon: 'target',
     identity: '',
     cue: '',
     tinyVersion: '',
-    reward: '',
-    icon: 'target'
+    reward: ''
   })
-  const days = useMemo(
-    () => Array.from({ length: 7 }, (_, index) => moveDays(weekStart, index)),
-    [weekStart]
-  )
-  const totalPossible = store.habits.length * days.length
+  const dayCount = daysInMonth(selectedMonth)
+  const days = useMemo(() => Array.from({ length: dayCount }, (_, index) => index + 1), [dayCount])
+  const currentMonth = selectedMonth === monthKey(today)
+  const reviewDays = currentMonth ? today.getDate() : selectedMonth < monthKey(today) ? dayCount : 0
+  const totalPossible = store.habits.length * reviewDays
   const totalCompleted = store.habits.reduce(
     (total, habit) =>
-      total + days.filter((day) => store.completions[habit.id]?.[toDateKey(day)]).length,
+      total +
+      days
+        .slice(0, reviewDays)
+        .filter((day) => store.completions[habit.id]?.[dateForDay(selectedMonth, day)]).length,
     0
   )
   const overall = totalPossible ? Math.round((totalCompleted / totalPossible) * 100) : 0
@@ -77,6 +77,11 @@ export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
     return () => window.clearTimeout(timeout)
   }, [hydrated, store])
 
+  const changeMonth = (offset: number): void => {
+    const [year = '0', month = '1'] = selectedMonth.split('-')
+    setSelectedMonth(monthKey(new Date(Number(year), Number(month) - 1 + offset, 1)))
+  }
+
   const toggleHabit = (habit: Habit, date: string): void => {
     setStore((current) => ({
       ...current,
@@ -95,15 +100,15 @@ export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
     const habit: Habit = {
       id: crypto.randomUUID(),
       title: draft.title.trim(),
+      icon: draft.icon,
       identity: draft.identity.trim(),
       cue: draft.cue.trim(),
       tinyVersion: draft.tinyVersion.trim(),
       reward: draft.reward.trim(),
-      icon: draft.icon,
       createdAt: new Date().toISOString()
     }
     setStore((current) => ({ ...current, habits: [...current.habits, habit] }))
-    setDraft({ title: '', identity: '', cue: '', tinyVersion: '', reward: '', icon: 'target' })
+    setDraft({ title: '', icon: 'target', identity: '', cue: '', tinyVersion: '', reward: '' })
     setShowForm(false)
   }
 
@@ -121,32 +126,24 @@ export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
         <div>
           <p className="eyebrow">THE PRACTICE</p>
           <h1>Small actions, seen clearly.</h1>
-          <p>Mark the days you showed up. Nothing more is required.</p>
+          <p>A quiet record of the days you showed up.</p>
         </div>
         <div className="habits-header-progress">
           <strong>{overall}%</strong>
-          <span>this week</span>
+          <span>this month</span>
         </div>
       </header>
 
       <div className="habits-toolbar">
         <div className="habits-month-control">
-          <button
-            type="button"
-            onClick={() => setWeekStart((current) => moveDays(current, -7))}
-            aria-label="Previous week"
-          >
+          <button type="button" onClick={() => changeMonth(-1)} aria-label="Previous month">
             <ChevronLeft size={16} />
           </button>
           <div>
-            <p className="eyebrow">WEEK OF</p>
-            <strong>{weekLabel(weekStart)}</strong>
+            <p className="eyebrow">MONTH</p>
+            <strong>{monthLabel(selectedMonth)}</strong>
           </div>
-          <button
-            type="button"
-            onClick={() => setWeekStart((current) => moveDays(current, 7))}
-            aria-label="Next week"
-          >
+          <button type="button" onClick={() => changeMonth(1)} aria-label="Next month">
             <ChevronRight size={16} />
           </button>
         </div>
@@ -255,19 +252,22 @@ export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
         <section className="habits-empty">
           <Target size={20} />
           <h2>Start with one small practice.</h2>
-          <p>
-            Add only the habits that genuinely matter this week. You can always add another later.
-          </p>
+          <p>Add only the habits that genuinely matter. You can always add another later.</p>
         </section>
       ) : (
-        <section className="habit-ledger-wrap" aria-label="Weekly habit tracker">
+        <section
+          className="habit-ledger-wrap"
+          aria-label={`${monthLabel(selectedMonth)} habit tracker`}
+        >
           <div className="habit-ledger-scroll">
-            <div className="habit-ledger habit-ledger-weekly">
+            <div
+              className="habit-ledger"
+              style={{ '--habit-days': dayCount } as React.CSSProperties}
+            >
               <div className="habit-ledger-corner">HABITS</div>
               {days.map((day) => (
-                <div className="habit-day-heading" key={toDateKey(day)}>
-                  <span>{dayLabel(day)}</span>
-                  <b>{day.getDate()}</b>
+                <div className="habit-day-heading" key={day}>
+                  {day}
                 </div>
               ))}
               {store.habits.map((habit) => (
@@ -284,7 +284,7 @@ export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
                     </button>
                   </div>
                   {days.map((day) => {
-                    const date = toDateKey(day)
+                    const date = dateForDay(selectedMonth, day)
                     const done = Boolean(store.completions[habit.id]?.[date])
                     return (
                       <button
@@ -303,7 +303,7 @@ export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
             </div>
           </div>
           <div className="habit-ledger-footer">
-            <span>Show up when you can. Missed days are information, not failure.</span>
+            <span>Click a day when you show up. Missed days are information, not failure.</span>
             <span>
               <b>{totalCompleted}</b> of {totalPossible} days completed
             </span>
