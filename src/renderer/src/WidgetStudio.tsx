@@ -371,7 +371,7 @@ function QuotePreview({ quote }: { quote: QuoteWidgetPreferences }): React.JSX.E
     quote.mode === 'scripture'
       ? 'SCRIPTURE'
       : quote.mode === 'custom'
-        ? 'PERSONAL WORD'
+        ? 'A WORD TO RETURN TO'
         : 'DAILY KAIZEN'
   return (
     <>
