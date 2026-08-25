@@ -56,9 +56,9 @@ export function excludeWindowFromDesktopPeek(handle: Buffer): void {
 }
 
 /**
- * Put a widget on the Windows desktop WorkerW layer. Unlike topmost mode this
- * keeps the widget below normal applications, while making it survive the
- * Show Desktop (Win+D) transition as part of the desktop itself.
+ * Put a widget on the Windows desktop SHELLDLL_DefView canvas. Unlike topmost
+ * mode this keeps the widget below normal applications, while making it survive
+ * the Show Desktop (Win+D) transition as part of the desktop itself.
  */
 export function setWindowDesktopLayer(handle: Buffer, enabled: boolean): void {
   if (process.platform !== 'win32') return
@@ -70,22 +70,25 @@ export function setWindowDesktopLayer(handle: Buffer, enabled: boolean): void {
     return
   }
 
-  const progman = FindWindowW('Progman', 'Program Manager')
+  const progman = FindWindowW('Progman', null)
   if (!progman) return
   SendMessageW(progman, WM_SHELL, 0, 0)
 
-  let workerWindow: bigint | null = null
+  // The shell view is the desktop canvas that survives Show Desktop. On some
+  // Windows builds it is directly under Progman; on others it is nested under
+  // a WorkerW created after the shell message above.
+  let desktopCanvas = FindWindowExW(progman, null, 'SHELLDLL_DefView', null)
   const callback = koffi.register((window: bigint) => {
     const shellView = FindWindowExW(window, null, 'SHELLDLL_DefView', null)
     if (!shellView) return true
-    workerWindow = FindWindowExW(null, window, 'WorkerW', null)
+    desktopCanvas = shellView
     return false
   }, koffi.pointer(EnumWindowsProc))
-  EnumWindows(callback, 0)
+  if (!desktopCanvas) EnumWindows(callback, 0)
   koffi.unregister(callback)
-  if (!workerWindow) return
+  if (!desktopCanvas) return
 
   const style = Number(GetWindowLongPtrW(windowHandle, GWL_STYLE))
   SetWindowLongPtrW(windowHandle, GWL_STYLE, BigInt((style | WS_CHILD) & ~WS_POPUP))
-  SetParent(windowHandle, workerWindow)
+  SetParent(windowHandle, desktopCanvas)
 }
