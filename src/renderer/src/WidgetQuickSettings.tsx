@@ -31,10 +31,15 @@ export function WidgetQuickSettings({
   )
 
   const update = (patch: AppearancePatch, delayed = false): void => {
+    const normalizedPatch = patch.alwaysOnDisplay
+      ? { ...patch, alwaysOnTop: false }
+      : patch.alwaysOnTop
+        ? { ...patch, alwaysOnDisplay: false }
+        : patch
     const next =
       kind === 'checklist'
-        ? { ...preferences, widget: { ...preferences.widget, ...patch } }
-        : { ...preferences, quoteWidget: { ...preferences.quoteWidget, ...patch } }
+        ? { ...preferences, widget: { ...preferences.widget, ...normalizedPatch } }
+        : { ...preferences, quoteWidget: { ...preferences.quoteWidget, ...normalizedPatch } }
     onChange(next)
     if (saveTimer.current) clearTimeout(saveTimer.current)
     if (delayed) {

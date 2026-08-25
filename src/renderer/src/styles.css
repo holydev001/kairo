@@ -2831,6 +2831,13 @@ html[data-window='widget'] #root {
   box-shadow: 0 20px 55px color-mix(in srgb, #000 38%, transparent);
   border-radius: 0;
 }
+html[data-exporting='true'] .widget-handle,
+html[data-exporting='true'] .widget-quick-settings {
+  display: none;
+}
+html[data-exporting='true'] .widget-shell {
+  padding-top: 24px;
+}
 .widget-scaled-content {
   display: flex;
   flex: 1;

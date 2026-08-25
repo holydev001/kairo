@@ -57,12 +57,17 @@ export function QuoteWidget(): React.JSX.Element {
       ? 'DAILY KAIZEN'
       : quote.mode === 'scripture'
         ? 'SCRIPTURE'
-        : 'PERSONAL WORD'
+        : 'A WORD TO RETURN TO'
   const attribution =
     quote.attribution.trim() || (quote.mode === 'daily' ? `KAIRO · ${formattedDate()}` : '')
 
-  const saveAsImage = (): void => {
-    void window.kairo.widget.saveQuoteImage()
+  const saveAsImage = async (): Promise<void> => {
+    document.documentElement.dataset.exporting = 'true'
+    try {
+      await window.kairo.widget.saveQuoteImage()
+    } finally {
+      delete document.documentElement.dataset.exporting
+    }
   }
 
   return (
@@ -77,7 +82,7 @@ export function QuoteWidget(): React.JSX.Element {
           >
             <Settings size={12} />
           </button>
-          <button aria-label="Save quote as image" onClick={saveAsImage}>
+          <button aria-label="Save quote as image" onClick={() => void saveAsImage()}>
             <Download size={12} />
           </button>
           <button aria-label="Close widget" onClick={() => void window.kairo.widget.close('quote')}>
