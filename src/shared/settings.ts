@@ -8,6 +8,8 @@ export const quoteModeSchema = z.enum(['daily', 'custom', 'scripture'])
 
 export const widgetPreferencesSchema = z.object({
   size: widgetSizeSchema,
+  open: z.boolean().default(false),
+  position: z.object({ x: z.number(), y: z.number() }).nullable().default(null),
   alwaysOnDisplay: z.boolean().default(false),
   alwaysOnTop: z.boolean().default(false),
   translucent: z.boolean(),
@@ -25,6 +27,8 @@ export type WidgetKind = z.infer<typeof widgetKindSchema>
 export function createDefaultWidgetPreferences(): WidgetPreferences {
   return {
     size: 'standard',
+    open: false,
+    position: null,
     alwaysOnDisplay: false,
     alwaysOnTop: false,
     translucent: true,
@@ -39,6 +43,8 @@ export function createDefaultWidgetPreferences(): WidgetPreferences {
 
 export const quoteWidgetPreferencesSchema = z.object({
   size: widgetSizeSchema,
+  open: z.boolean().default(false),
+  position: z.object({ x: z.number(), y: z.number() }).nullable().default(null),
   alwaysOnDisplay: z.boolean().default(false),
   alwaysOnTop: z.boolean().default(false),
   translucent: z.boolean(),
@@ -56,6 +62,8 @@ export type QuoteWidgetPreferences = z.infer<typeof quoteWidgetPreferencesSchema
 export function createDefaultQuoteWidgetPreferences(): QuoteWidgetPreferences {
   return {
     size: 'standard',
+    open: false,
+    position: null,
     alwaysOnDisplay: false,
     alwaysOnTop: false,
     translucent: true,
