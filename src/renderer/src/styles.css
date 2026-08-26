@@ -4225,6 +4225,81 @@ html[data-widget-size='compact'] .widget-shell {
   }
 }
 
+/* Final habits controls: keep the period navigator horizontal and deliberate. */
+.habits-toolbar > .habits-week-control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+.habits-week-control > div {
+  display: grid;
+  gap: 3px;
+  min-width: 150px;
+}
+.habits-week-control > button,
+.habits-view > .habits-toolbar > .primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  border: 1px solid var(--theme-accent);
+  border-radius: 0;
+  padding: 8px 13px;
+  color: var(--theme-accent-contrast);
+  background: var(--theme-accent);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+.habits-week-control > button {
+  width: 30px;
+  min-height: 30px;
+  padding: 0;
+  color: var(--theme-muted);
+  background: transparent;
+}
+.habits-week-control > button:hover,
+.habits-week-control > button:focus-visible {
+  color: var(--theme-accent-strong);
+  background: var(--theme-surface-raised);
+}
+.habits-view > .habits-toolbar > .primary-action:hover,
+.habits-view > .habits-toolbar > .primary-action:focus-visible {
+  border-color: var(--theme-accent-strong);
+  color: var(--theme-accent-contrast);
+  background: var(--theme-accent-strong);
+}
+.habit-day-cell {
+  appearance: none;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 47px;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+}
+.habit-day-cell i {
+  display: block;
+  flex: 0 0 auto;
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .habits-toolbar > .habits-week-control {
+    width: 100%;
+  }
+  .habits-week-control > div {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
 /* Habits navigation and ledger controls use the same quiet language as the rest of Kairo. */
 .sidebar .habits-nav-item {
   border-left: 2px solid transparent;

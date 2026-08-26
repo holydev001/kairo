@@ -135,7 +135,7 @@ export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
       </header>
 
       <div className="habits-toolbar">
-        <div className="habits-month-control">
+        <div className="habits-week-control">
           <button type="button" onClick={() => changeWeek(-1)} aria-label="Previous week">
             <ChevronLeft size={16} />
           </button>
