@@ -4225,6 +4225,52 @@ html[data-widget-size='compact'] .widget-shell {
   }
 }
 
+/* Habits navigation and ledger controls use the same quiet language as the rest of Kairo. */
+.sidebar .habits-nav-item {
+  border-left: 2px solid transparent;
+  color: var(--theme-muted);
+}
+.sidebar .habits-nav-item:hover {
+  color: var(--theme-text);
+  background: var(--theme-surface-raised);
+}
+.sidebar .habits-nav-item.active {
+  border-left-color: var(--theme-accent);
+  color: var(--theme-text);
+  background: var(--theme-surface-raised);
+  box-shadow: inset 2px 0 var(--theme-accent);
+}
+.habit-ledger-scroll {
+  scrollbar-color: var(--theme-accent) var(--theme-sidebar);
+  scrollbar-width: thin;
+}
+.habit-ledger-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+.habit-ledger-scroll::-webkit-scrollbar-track {
+  background: var(--theme-sidebar);
+}
+.habit-ledger-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid var(--theme-sidebar);
+  background: var(--theme-accent);
+}
+.habit-ledger-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-accent-strong);
+}
+.habit-ledger-weekly {
+  grid-template-columns: minmax(190px, 1.5fr) repeat(7, minmax(44px, 1fr));
+  min-width: 560px;
+}
+.habit-day-heading {
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .habit-ledger-weekly {
+    min-width: 500px;
+    grid-template-columns: minmax(150px, 1.3fr) repeat(7, minmax(40px, 1fr));
+  }
+}
+
 /* Reference-style monthly ledger. The grid stays compact and scrolls as one unit on narrow windows. */
 .habit-ledger-wrap {
   border: 1px solid var(--theme-line);
