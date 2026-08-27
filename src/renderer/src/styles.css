@@ -4225,6 +4225,127 @@ html[data-widget-size='compact'] .widget-shell {
   }
 }
 
+/* Final habits controls: keep the period navigator horizontal and deliberate. */
+.habits-toolbar > .habits-week-control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+.habits-week-control > div {
+  display: grid;
+  gap: 3px;
+  min-width: 150px;
+}
+.habits-week-control > button,
+.habits-view > .habits-toolbar > .primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 34px;
+  border: 1px solid var(--theme-accent);
+  border-radius: 0;
+  padding: 8px 13px;
+  color: var(--theme-accent-contrast);
+  background: var(--theme-accent);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+.habits-week-control > button {
+  width: 30px;
+  min-height: 30px;
+  padding: 0;
+  color: var(--theme-muted);
+  background: transparent;
+}
+.habits-week-control > button:hover,
+.habits-week-control > button:focus-visible {
+  color: var(--theme-accent-strong);
+  background: var(--theme-surface-raised);
+}
+.habits-view > .habits-toolbar > .primary-action:hover,
+.habits-view > .habits-toolbar > .primary-action:focus-visible {
+  border-color: var(--theme-accent-strong);
+  color: var(--theme-accent-contrast);
+  background: var(--theme-accent-strong);
+}
+.habit-day-cell {
+  appearance: none;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  min-height: 47px;
+  margin: 0;
+  padding: 0;
+  line-height: 1;
+}
+.habit-day-cell i {
+  display: block;
+  flex: 0 0 auto;
+  margin: 0;
+}
+@media (max-width: 600px) {
+  .habits-toolbar > .habits-week-control {
+    width: 100%;
+  }
+  .habits-week-control > div {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* Habits navigation and ledger controls use the same quiet language as the rest of Kairo. */
+.sidebar .habits-nav-item {
+  border-left: 2px solid transparent;
+  color: var(--theme-muted);
+}
+.sidebar .habits-nav-item:hover {
+  color: var(--theme-text);
+  background: var(--theme-surface-raised);
+}
+.sidebar .habits-nav-item.active {
+  border-left-color: var(--theme-accent);
+  color: var(--theme-text);
+  background: var(--theme-surface-raised);
+  box-shadow: inset 2px 0 var(--theme-accent);
+}
+.habit-ledger-scroll {
+  scrollbar-color: var(--theme-accent) var(--theme-sidebar);
+  scrollbar-width: thin;
+}
+.habit-ledger-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+.habit-ledger-scroll::-webkit-scrollbar-track {
+  background: var(--theme-sidebar);
+}
+.habit-ledger-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid var(--theme-sidebar);
+  background: var(--theme-accent);
+}
+.habit-ledger-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-accent-strong);
+}
+.habit-ledger-weekly {
+  grid-template-columns: minmax(190px, 1.5fr) repeat(7, minmax(44px, 1fr));
+  min-width: 560px;
+}
+.habit-day-heading {
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .habit-ledger-weekly {
+    min-width: 500px;
+    grid-template-columns: minmax(150px, 1.3fr) repeat(7, minmax(40px, 1fr));
+  }
+}
+
 /* Reference-style monthly ledger. The grid stays compact and scrolls as one unit on narrow windows. */
 .habit-ledger-wrap {
   border: 1px solid var(--theme-line);
@@ -4319,7 +4440,7 @@ html[data-widget-size='compact'] .widget-shell {
 .habit-day-cell:hover i {
   border-color: var(--theme-accent);
 }
-.habit-day-cell.done i {
+.habit-day-cell.is-complete i {
   border-color: var(--theme-accent);
   background: var(--theme-accent);
 }
@@ -4329,7 +4450,7 @@ html[data-widget-size='compact'] .widget-shell {
 .habit-day-cell.today i {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-accent) 22%, transparent);
 }
-.habit-day-cell.today.done i {
+.habit-day-cell.today.is-complete i {
   box-shadow: none;
 }
 .habit-ledger-footer {
@@ -4558,7 +4679,7 @@ html[data-widget-size='compact'] .widget-shell {
 .habit-day-cell:hover i {
   border-color: var(--theme-accent);
 }
-.habit-day-cell.done i {
+.habit-day-cell.is-complete i {
   border-color: var(--theme-accent);
   background: var(--theme-accent);
 }
@@ -4568,7 +4689,7 @@ html[data-widget-size='compact'] .widget-shell {
 .habit-day-cell.today i {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-accent) 22%, transparent);
 }
-.habit-day-cell.today.done i {
+.habit-day-cell.today.is-complete i {
   box-shadow: none;
 }
 .habit-ledger-footer {
