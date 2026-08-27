@@ -11,8 +11,8 @@
   "main": "out/main/index.js",
   "type": "module",
   "scripts": {
-    "dev": "electron-vite dev",
-    "build": "pnpm typecheck && electron-vite build",
+    "dev": "node api.js && electron-vite dev",
+    "build": "node api.js && pnpm typecheck && electron-vite build",
     "package:win": "pnpm build && electron-builder --win --x64 --publish never",
     "preview": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
