@@ -378,7 +378,7 @@ export function App(): React.JSX.Element {
             <span className="nav-label">Weekly Review</span>
           </button>
           <button
-            className={activeView === 'habits' ? 'active' : ''}
+            className={activeView === 'habits' ? 'active habits-nav-item' : 'habits-nav-item'}
             onClick={() => setActiveView('habits')}
           >
             <Repeat2 size={17} />
