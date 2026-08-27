@@ -4440,7 +4440,7 @@ html[data-widget-size='compact'] .widget-shell {
 .habit-day-cell:hover i {
   border-color: var(--theme-accent);
 }
-.habit-day-cell.done i {
+.habit-day-cell.is-complete i {
   border-color: var(--theme-accent);
   background: var(--theme-accent);
 }
@@ -4450,7 +4450,7 @@ html[data-widget-size='compact'] .widget-shell {
 .habit-day-cell.today i {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-accent) 22%, transparent);
 }
-.habit-day-cell.today.done i {
+.habit-day-cell.today.is-complete i {
   box-shadow: none;
 }
 .habit-ledger-footer {
@@ -4679,7 +4679,7 @@ html[data-widget-size='compact'] .widget-shell {
 .habit-day-cell:hover i {
   border-color: var(--theme-accent);
 }
-.habit-day-cell.done i {
+.habit-day-cell.is-complete i {
   border-color: var(--theme-accent);
   background: var(--theme-accent);
 }
@@ -4689,7 +4689,7 @@ html[data-widget-size='compact'] .widget-shell {
 .habit-day-cell.today i {
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-accent) 22%, transparent);
 }
-.habit-day-cell.today.done i {
+.habit-day-cell.today.is-complete i {
   box-shadow: none;
 }
 .habit-ledger-footer {

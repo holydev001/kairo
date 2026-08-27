@@ -285,7 +285,7 @@ export function HabitView({ hidden }: HabitViewProps): React.JSX.Element {
                     const done = Boolean(store.completions[habit.id]?.[date])
                     return (
                       <button
-                        className={`habit-day-cell${done ? ' done' : ''}${date === todayKey ? ' today' : ''}`}
+                        className={`habit-day-cell${done ? ' is-complete' : ''}${date === todayKey ? ' today' : ''}`}
                         type="button"
                         key={date}
                         onClick={() => toggleHabit(habit, date)}
